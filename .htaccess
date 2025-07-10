@@ -1,0 +1,6 @@
+# Redireciona todas as requisições para o index.php
+RewriteEngine On
+
+# Redireciona para a pasta public se não estiver nela
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]

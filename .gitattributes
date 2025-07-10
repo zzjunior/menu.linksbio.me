@@ -1,0 +1,70 @@
+
+* text=auto
+
+
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sql text eol=lf
+
+# Templates
+*.html text eol=lf
+*.twig text eol=lf
+
+# Configuração
+.env* text eol=lf
+.htaccess text eol=lf
+composer.json text eol=lf
+composer.lock text eol=lf
+package.json text eol=lf
+
+# Imagens
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+*.webp binary
+
+# Docs
+*.pdf binary
+*.doc binary
+*.docx binary
+
+
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+
+*.mp3 binary
+*.mp4 binary
+*.mov binary
+*.avi binary
+
+# Ignorar 
+.gitattributes export-ignore
+.gitignore export-ignore
+.github/ export-ignore
+tests/ export-ignore
+docs/ export-ignore
+README.md export-ignore
+
+
+public/assets/vendor/* linguist-vendored
+vendor/* linguist-vendored
+*.sql linguist-detectable=true

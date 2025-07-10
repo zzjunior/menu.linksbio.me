@@ -1,0 +1,92 @@
+# Dependencies
+/vendor/
+/node_modules/
+composer.phar
+
+# Env
+.env
+.env.local
+.env.production
+.env.staging
+.env.backup
+
+# Logs
+/logs/
+*.log
+error.log
+access.log
+
+# Cache
+/cache/
+/tmp/
+.cache/
+
+# Uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# PHP
+*.php~
+.buildpath
+.project
+.settings/
+
+# Database
+*.sqlite
+*.db
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Temporary files
+*.tmp
+*.temp
+
+# Documentation build
+/docs/build/
+
+# Testing
+/tests/coverage/
+.phpunit.result.cache
+phpunit.xml
+
+# Docker
+docker-compose.override.yml
+
+# Package managers
+package-lock.json
+yarn.lock
+
+# Build artifacts
+/build/
+/dist/
+
+# Local configuration
+config.local.php
+database.local.php
+
+# Test files
+test.php
+setup_multistore.php
+test_connection.php
+fix_database.php

@@ -1,0 +1,48 @@
+name: FTP Deploy menu.linksbio.me
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: 🚀 Deploy menu.linksbio.me
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_mysql, dom, filter, gd, json
+
+      - name: 📦 Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: /tmp/composer-cache
+          key: ${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+
+      - name: 🔧 Install dependencies with Composer
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: 📁 Prepare deployment files
+        run: |
+          mkdir -p public/uploads/{products,categories,ingredients}
+          chmod -R 755 public/uploads
+
+      - name: 📂 Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.ftp_host }}
+          username: ${{ secrets.ftp_user }}
+          password: ${{ secrets.ftp_password }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            **/.env.example
+            **/README.md
+            **/.gitignore

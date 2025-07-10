@@ -1,0 +1,35 @@
+{
+  "extends": [
+    "web-recommended"
+  ],
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not op_mini all"
+  ],
+  "hints": {
+    "axe": "error",
+    "performance-budget": {
+      "error": {
+        "connectionType": "3GFast",
+        "loadTime": 3000,
+        "requests": 50,
+        "size": 1500
+      }
+    },
+    "manifest-exists": "error",
+    "manifest-is-valid": "error",
+    "meta-viewport": "error",
+    "no-vulnerable-javascript-libraries": "error",
+    "apple-touch-icons": "warning",
+    "compat-api/css": "warning",
+    "compat-api/html": "warning",
+    "highest-available-document-mode": "off",
+    "meta-charset-utf-8": "error"
+  },
+  "ignoredUrls": [
+    "/admin/*",
+    "*.min.js",
+    "*.min.css"
+  ]
+}

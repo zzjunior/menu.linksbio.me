@@ -1,0 +1,6 @@
+<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="300" height="300" fill="#F3F4F6"/>
+<circle cx="150" cy="120" r="40" fill="#D1D5DB"/>
+<rect x="110" y="180" width="80" height="60" rx="8" fill="#D1D5DB"/>
+<text x="150" y="270" text-anchor="middle" fill="#6B7280" font-family="Arial, sans-serif" font-size="14">Ingrediente</text>
+</svg>

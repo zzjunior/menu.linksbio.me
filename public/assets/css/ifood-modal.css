@@ -1,0 +1,174 @@
+.ifood-modal-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ifood-modal-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.ifood-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+}
+
+.ifood-modal-price {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ea3323;
+}
+
+.ifood-modal-desc {
+    color: #6b7280;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+}
+
+.ifood-modal-ingredients {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+}
+
+.ifood-modal-group {
+    margin-bottom: 2rem;
+}
+
+.ifood-modal-group-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ifood-ingredient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.ifood-ingredient-row:hover {
+    border-color: #ea3323;
+    box-shadow: 0 2px 4px rgba(234, 51, 35, 0.1);
+}
+
+.ifood-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ifood-stepper-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #ea3323;
+    background-color: #ffffff;
+    color: #ea3323;
+    font-weight: 600;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ifood-stepper-btn:hover {
+    background-color: #ea3323;
+    color: #ffffff;
+}
+
+.ifood-stepper-btn:disabled {
+    border-color: #d1d5db;
+    color: #d1d5db;
+    cursor: not-allowed;
+}
+
+.ifood-stepper-btn:disabled:hover {
+    background-color: #ffffff;
+    color: #d1d5db;
+}
+
+.ifood-stepper-qty {
+    font-weight: 600;
+    font-size: 1rem;
+    min-width: 20px;
+    text-align: center;
+    color: #1f2937;
+}
+
+.ifood-modal-footer {
+    position: sticky;
+    bottom: 0;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    margin: 0 -1.5rem -1.5rem;
+}
+
+.ifood-add-btn {
+    width: 100%;
+    padding: 1rem 2rem;
+    background-color: #ea3323;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ifood-add-btn:hover {
+    background-color: #dc2626;
+}
+
+.ifood-add-btn:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Scrollbar personalizada */
+.ifood-modal-ingredients::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ifood-modal-ingredients::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.ifood-modal-ingredients::-webkit-scrollbar-thumb {
+    background: #ea3323;
+    border-radius: 3px;
+}
+
+.ifood-modal-ingredients::-webkit-scrollbar-thumb:hover {
+    background: #dc2626;
+}
