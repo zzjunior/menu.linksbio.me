@@ -6,6 +6,13 @@
     <title><?= $title ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- { Ativando print do pedido na impressora } -->
+<script>
+window.onload = function() {
+    window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/<?= $order['id'] ?>";
+};
+</script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="container mx-auto px-4 py-6">
@@ -80,7 +87,7 @@
                                         Adicionais: 
                                         <?php 
                                         $ingredientNames = array_map(function($ing) {
-                                            $name = $ing['ingredient_name'];
+                                            $name = $ing['name'];
                                             if ($ing['quantity'] > 1) {
                                                 $name .= " ({$ing['quantity']}x)";
                                             }

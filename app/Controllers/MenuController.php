@@ -81,7 +81,7 @@ class MenuController
             'pageTitle' => $store['store_name']
         ];
 
-        return $this->templateService->renderResponse($response, 'menu/store', $data);
+        return $this->templateService->renderResponse($response, 'menu/index', $data);
     }
 
     /**

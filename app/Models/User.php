@@ -4,6 +4,8 @@ namespace App\Models;
 
 class User extends BaseModel
 {
+    private const TABLE = 'users';
+
     public function getById($id)
     {
         return $this->findById('users', $id);
@@ -27,6 +29,11 @@ class User extends BaseModel
     public function updateUser($id, $data)
     {
         return $this->update('users', $id, $data);
+    }
+
+    public function updateById(int $id, array $data): bool
+    {
+        return $this->update(self::TABLE, $id, $data);
     }
 
     public function verifyPassword($password, $hash)
@@ -57,9 +64,13 @@ class User extends BaseModel
         return $slug;
     }
 
-    public function getStoreBySlug($slug)
+    public function getStoreBySlug(string $slug): ?array
     {
-        return $this->findBySlug($slug);
+        $sql = "SELECT id, store_name, store_description, address, whatsapp, logo FROM users WHERE store_slug = ? AND is_active = 1 LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$slug]);
+        $store = $result->fetchAssociative();
+        return $store ?: null;
     }
 
     public function isActive($userId)

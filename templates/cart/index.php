@@ -21,21 +21,24 @@
                         <p class="text-sm text-gray-600"><?= htmlspecialchars($store['store_name']) ?></p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-lg font-bold text-purple-600">
-                        R$ <?= number_format($total, 2, ',', '.') ?>
-                    </div>
-                    <div class="text-sm text-gray-500">
-                        <?= count($cart_items) ?> item(s)
-                    </div>
-                </div>
             </div>
         </div>
     </header>
-
     <div class="container mx-auto px-4 py-6">
-        <?php if (empty($cart_items)): ?>
-            <!-- Carrinho vazio -->
+        <div id="cart-items"></div>
+        <!-- Resumo e botões -->
+        <div id="cart-summary" class="hidden bg-white rounded-lg shadow-sm border p-4"></div>
+    </div>
+<script>
+function renderCart() {
+    const cart = JSON.parse(localStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+    const cartItemsDiv = document.getElementById('cart-items');
+    const cartSummaryDiv = document.getElementById('cart-summary');
+    cartItemsDiv.innerHTML = '';
+    let total = 0;
+
+    if (cart.length === 0) {
+        cartItemsDiv.innerHTML = `
             <div class="text-center py-12">
                 <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Carrinho vazio</h2>
@@ -46,106 +49,103 @@
                     Ver Cardápio
                 </a>
             </div>
-        <?php else: ?>
-            <!-- Itens do carrinho -->
-            <div class="space-y-4 mb-6">
-                <?php foreach ($cart_items as $item): ?>
-                    <div class="bg-white rounded-lg shadow-sm border p-4">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center mb-2">
-                                    <?php if ($item['product']['image_url']): ?>
-                                        <img src="<?= htmlspecialchars($item['product']['image_url']) ?>" 
-                                             alt="<?= htmlspecialchars($item['product']['name']) ?>"
-                                             class="w-12 h-12 object-cover rounded-md mr-3">
-                                    <?php else: ?>
-                                        <div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center mr-3">
-                                            <i class="fas fa-image text-gray-400"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-800"><?= htmlspecialchars($item['product']['name']) ?></h3>
-                                        <?php if ($item['size']): ?>
-                                            <p class="text-sm text-gray-600">Tamanho: <?= htmlspecialchars($item['size']) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="font-bold text-purple-600">
-                                            R$ <?= number_format($item['total'], 2, ',', '.') ?>
-                                        </div>
-                                        <div class="text-sm text-gray-500">
-                                            <?= $item['quantity'] ?>x R$ <?= number_format($item['price'], 2, ',', '.') ?>
-                                        </div>
-                                    </div>
-                                </div>
+        `;
+        cartSummaryDiv.classList.add('hidden');
+        return;
+    }
 
-                                <?php if (!empty($item['ingredients'])): ?>
-                                    <div class="mb-2">
-                                        <p class="text-sm text-gray-600 mb-1">
-                                            <i class="fas fa-plus-circle text-green-500 mr-1"></i>
-                                            Adicionais:
-                                        </p>
-                                        <div class="flex flex-wrap gap-1">
-                                            <?php foreach ($item['ingredients'] as $ingredient): ?>
-                                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                                    <?= htmlspecialchars($ingredient['name']) ?>
-                                                    <?php if ($ingredient['quantity'] > 1): ?>
-                                                        (<?= $ingredient['quantity'] ?>x)
-                                                    <?php endif; ?>
-                                                    <?php if ($ingredient['price'] > 0): ?>
-                                                        +R$ <?= number_format($ingredient['price'], 2, ',', '.') ?>
-                                                    <?php endif; ?>
-                                                </span>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+    cart.forEach(item => {
+        let itemTotal = item.price * item.quantity;
+        let ingredientsHtml = '';
+        if (item.ingredients && typeof item.ingredients === 'object') {
+            for (const [id, qty] of Object.entries(item.ingredients)) {
+                ingredientsHtml += `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-1">
+                    Ingrediente #${id} ${qty > 1 ? '(' + qty + 'x)' : ''}
+                </span>`;
+            }
+        }
+        total += itemTotal;
 
-                                <?php if ($item['notes']): ?>
-                                    <div class="mb-2">
-                                        <p class="text-sm text-gray-600">
-                                            <i class="fas fa-sticky-note text-yellow-500 mr-1"></i>
-                                            Observações: <?= htmlspecialchars($item['notes']) ?>
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <a href="/<?= $store_slug ?>/carrinho/remover/<?= $item['cart_id'] ?>" 
-                               class="ml-4 text-red-500 hover:text-red-700 transition duration-200"
-                               onclick="return confirm('Remover este item do carrinho?')">
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-
-            <!-- Resumo e botões -->
-            <div class="bg-white rounded-lg shadow-sm border p-4">
-                <div class="border-b pb-4 mb-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-lg font-semibold text-gray-800">Total</span>
-                        <span class="text-2xl font-bold text-purple-600">
-                            R$ <?= number_format($total, 2, ',', '.') ?>
-                        </span>
-                    </div>
+        cartItemsDiv.innerHTML += `
+            <div class="bg-white rounded-lg shadow-sm border p-4 mb-4 flex items-center justify-between">
+                <div>
+                    <div class="font-bold text-gray-800">${item.name}</div>
+                    <div class="text-sm text-gray-600">Qtd: ${item.quantity}</div>
+                    <div>${ingredientsHtml}</div>
                 </div>
-
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <a href="/<?= $store_slug ?>" 
-                       class="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition duration-200 text-center">
-                        <i class="fas fa-plus mr-2"></i>
-                        Adicionar mais itens
-                    </a>
-                    <a href="/<?= $store_slug ?>/checkout" 
-                       class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200 text-center">
-                        <i class="fas fa-credit-card mr-2"></i>
-                        Finalizar Pedido
-                    </a>
+                <div class="flex items-center gap-2">
+                    <span class="text-lg font-semibold text-purple-600">R$ ${(itemTotal).toFixed(2).replace('.', ',')}</span>
+                    <button onclick="removeCartItem('${item.cart_id}')" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             </div>
-        <?php endif; ?>
-    </div>
+        `;
+    });
+
+    cartSummaryDiv.innerHTML = `
+        <div class="border-b pb-4 mb-4">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-semibold text-gray-800">Total</span>
+                <span class="text-2xl font-bold text-purple-600">
+                    R$ ${total.toFixed(2).replace('.', ',')}
+                </span>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <a href="/<?= $store_slug ?>" 
+               class="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition duration-200 text-center">
+                <i class="fas fa-plus mr-2"></i>
+                Adicionar mais itens
+            </a>
+            <a href="#" 
+               class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 text-center" id="checkout-btn">
+                <i class="fas fa-credit-card mr-2"></i>
+                Finalizar Pedido
+            </a>
+        </div>
+    `;
+    cartSummaryDiv.classList.remove('hidden');
+}
+
+function removeCartItem(cartId) {
+    let cart = JSON.parse(localStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+    cart = cart.filter(item => item.cart_id !== cartId);
+    localStorage.setItem('cart_<?= $store['id'] ?>', JSON.stringify(cart));
+    renderCart();
+    if (typeof updateCartCount === 'function') updateCartCount();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderCart();
+    if (typeof updateCartCount === 'function') updateCartCount();
+
+    // Checkout sincroniza carrinho antes de ir para o checkout
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const storeId = "<?= $store['id'] ?>";
+            const storeSlug = "<?= $store_slug ?>";
+            const cart = JSON.parse(localStorage.getItem('cart_' + storeId) || '[]');
+            fetch('/' + storeSlug + '/carrinho/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cart })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/' + storeSlug + '/checkout';
+                } else {
+                    alert('Erro ao salvar o carrinho. Tente novamente.');
+                }
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>

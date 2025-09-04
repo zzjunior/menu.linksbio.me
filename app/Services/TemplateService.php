@@ -43,11 +43,15 @@ class TemplateService
     /**
      * Renderiza um template e escreve no response
      */
-    public function renderResponse($response, string $template, array $data = [])
+    public function renderResponse($response, $template, $data = [])
     {
-        $html = $this->render($template, $data);
+        // Renderiza o template diretamente, sem cache
+        extract($data);
+        ob_start();
+        include $this->getTemplatePath($template);
+        $html = ob_get_clean();
         $response->getBody()->write($html);
-        return $response->withHeader('Content-Type', 'text/html');
+        return $response;
     }
 
     /**
@@ -73,5 +77,13 @@ class TemplateService
     public function formatPrice(float $price): string
     {
         return 'R$ ' . number_format($price, 2, ',', '.');
+    }
+
+    /**
+     * Retorna o caminho completo do template
+     */
+    public function getTemplatePath(string $template): string
+    {
+        return $this->templatePath . $template . '.php';
     }
 }

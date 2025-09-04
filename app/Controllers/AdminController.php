@@ -601,4 +601,43 @@ class AdminController
             return $this->templateService->renderResponse($response, 'admin/ingredients/form', $templateData);
         }
     }
+
+    /**
+     * Faz upload do logo da loja
+     */
+    public function uploadLogo(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+
+        try {
+            // Forçar uso do $_FILES para upload
+            if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                $logoUrl = $this->handleImageUpload($_FILES['logo'], 'stores');
+                if ($logoUrl) {
+                    $data['logo'] = $logoUrl;
+                }
+            }
+
+            // Atualiza o usuário (loja) com o logo
+            $userId = $_SESSION['user_id'];
+            $mappedData = [
+                'logo' => $data['logo'] ?? null
+            ];
+
+            $this->userModel->updateById($userId, $mappedData);
+
+            return $response
+                ->withHeader('Location', '/admin')
+                ->withStatus(302);
+        } catch (\Exception $e) {
+            error_log('ERRO ao fazer upload do logo: ' . $e->getMessage());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+
+            return $this->templateService->renderResponse($response, 'admin/dashboard', [
+                'pageTitle' => 'Dashboard',
+                'error' => 'Erro ao fazer upload do logo: ' . $e->getMessage()
+            ]);
+        }
+    }
+
 }

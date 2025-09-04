@@ -16,6 +16,20 @@
                     <h1 class="text-3xl font-bold text-gray-900"><?= htmlspecialchars($store['store_name']) ?></h1>
                     <p class="text-gray-600">Painel Administrativo</p>
                 </div>
+            <!---logo upload--->
+            <div class="flex items-center space-x-4 m-2 mb-3">
+                <form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
+                    <label for="logo-upload" class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
+                        <i class="fas fa-upload mr-1"></i>
+                        Adicionar Logo à loja
+            </label>
+            <input type="file" id="logo-upload" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
+            </form>
+            <?php if (!empty($store['logo'])): ?>
+            <img src="<?= htmlspecialchars($store['logo']) ?>" alt="Logo da loja" class="h-10 rounded shadow">
+            <?php endif; ?>
+        </div>
+        
                 <div class="flex items-center space-x-4">
                     <a href="/<?= htmlspecialchars($store['store_slug']) ?>" 
                        target="_blank"
