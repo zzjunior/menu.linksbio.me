@@ -30,7 +30,10 @@ jobs:
       - name: 📁 Prepare deployment files
         run: |
           mkdir -p public/uploads/{products,categories,ingredients}
+          mkdir -p storage/logs
+          touch storage/logs/app.log
           chmod -R 755 public/uploads
+          chmod -R 755 storage/logs
 
       - name: 📂 Sync files
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -46,3 +49,4 @@ jobs:
             **/.env.example
             **/README.md
             **/.gitignore
+            **/src/**
