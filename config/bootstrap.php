@@ -49,4 +49,9 @@ $errorMiddleware = $app->addErrorMiddleware(
     true
 );
 
+// Logger
+$container->set('logger', function() {
+    return (new \App\Services\LoggerService())->getLogger();
+});
+
 return $app;

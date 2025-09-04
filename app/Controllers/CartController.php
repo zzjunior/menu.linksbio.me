@@ -263,7 +263,7 @@ class CartController
     /**
      * Processa o pedido e envia para WhatsApp
      */
-    public function processOrder(Request $request, Response $response, array $args): Response
+public function processOrder(Request $request, Response $response, array $args): Response
 {
     $storeSlug = $args['store'] ?? '';
     $store = $this->userModel->getStoreBySlug($storeSlug);
@@ -273,7 +273,6 @@ class CartController
     }
 
     $cart = $_SESSION['cart_' . $store['id']] ?? [];
-    // Se o carrinho estiver vazio, redireciona para o checkout (não para o menu)
     if (empty($cart)) {
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
     }
@@ -284,7 +283,6 @@ class CartController
     $customerAddress = trim($data['customer_address'] ?? '');
     $notes = trim($data['notes'] ?? '');
 
-    // Validações
     if (empty($customerName) || empty($customerPhone) || empty($customerAddress)) {
         $_SESSION['error'] = 'Todos os campos são obrigatórios';
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
@@ -309,67 +307,74 @@ class CartController
     }
 
     try {
-        // Salvar pedido na tabela 'pedidos'
-        $stmt = $this->pdo->prepare("INSERT INTO pedidos (store_id, customer_name, customer_phone, customer_address, notes, cart, total_amount) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([
-            $store['id'],
-            $customerName,
-            $customerPhone,
-            $customerAddress,
-            $notes,
-            json_encode($cart),
-            $total
+        // Salvar pedido na tabela orders
+        $orderId = $this->orderModel->create([
+            'user_id' => $store['id'],
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'customer_address' => $customerAddress,
+            'notes' => $notes,
+            'total_amount' => $total,
+            'created_at' => date('Y-m-d H:i:s')
         ]);
-        $pedidoId = $this->pdo->lastInsertId();
+
+        // Salvar itens do pedido
+        foreach ($cart as $item) {
+            $orderItemId = $this->orderItemModel->create([
+                'order_id' => $orderId,
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $item['price'],
+                'size' => $item['size'] ?? '',
+                'notes' => $item['notes'] ?? '',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            // Salvar ingredientes/adicionais do item
+            if (!empty($item['ingredients'])) {
+                foreach ($item['ingredients'] as $ingredientId => $quantity) {
+                    $ingredient = $this->ingredientModel->getById($ingredientId);
+                    $price = $ingredient ? $ingredient['additional_price'] : 0;
+                    $this->orderItemModel->addIngredient($orderItemId, $ingredientId, $quantity, $price);
+                }
+            }
+        }
 
         // Montar mensagem WhatsApp simples
-        $whatsappMessage = "Olá, novo pedido recebido!\nCliente: $customerName\nTelefone: $customerPhone\nEndereço: $customerAddress\nTotal: R$ " . number_format($total, 2, ',', '.') . "\nPedido #$pedidoId";
+        $whatsappMessage = "Olá, novo pedido recebido!\nCliente: $customerName\nTelefone: $customerPhone\nEndereço: $customerAddress\nTotal: R$ " . number_format($total, 2, ',', '.') . "\nPedido #$orderId";
         $whatsappUrl = "https://wa.me/{$store['whatsapp']}?text=" . urlencode($whatsappMessage);
 
         // Limpar carrinho
         unset($_SESSION['cart_' . $store['id']]);
 
-        // Monta os itens do pedido para o template de sucesso
-        $orderItems = [];
-        foreach ($cart as $item) {
-            $product = $this->productModel->getById($item['product_id']);
-            $ingredients = [];
-            $itemTotal = $item['price'] * $item['quantity'];
-            if (!empty($item['ingredients'])) {
-                foreach ($item['ingredients'] as $ingredientId => $quantity) {
-                    $ingredient = $this->ingredientModel->getById($ingredientId);
-                    if ($ingredient) {
-                        $ingredients[] = [
-                            'name' => $ingredient['name'],
-                            'quantity' => $quantity,
-                            'price' => $ingredient['additional_price']
-                        ];
-                        $itemTotal += $ingredient['additional_price'] * $quantity * $item['quantity'];
+        // Buscar pedido completo para template de sucesso
+        $order = $this->orderModel->getOrderWithItems($orderId);
+
+        // Enriquecer ingredientes/adicionais dos itens do pedido com o campo 'name'
+        if (!empty($order['items'])) {
+            foreach ($order['items'] as &$item) {
+                if (!empty($item['ingredients'])) {
+                    foreach ($item['ingredients'] as &$ingredient) {
+                        if (empty($ingredient['name']) && !empty($ingredient['ingredient_id'])) {
+                            $ingredientData = $this->ingredientModel->getById($ingredient['ingredient_id']);
+                            if ($ingredientData && !empty($ingredientData['name'])) {
+                                $ingredient['name'] = $ingredientData['name'];
+                            } else {
+                                $ingredient['name'] = 'Adicional';
+                            }
+                        }
                     }
+                    unset($ingredient);
                 }
             }
-            $orderItems[] = [
-                'product_name' => $product ? $product['name'] : 'Produto removido',
-                'unit_price' => $item['price'],
-                'quantity' => $item['quantity'],
-                'size' => $item['size'] ?? '',
-                'ingredients' => $ingredients,
-                'notes' => $item['notes'] ?? '',
-                'total' => $itemTotal
-            ];
+            unset($item);
         }
 
         $data = [
             'title' => 'Pedido Enviado - ' . $store['store_name'],
             'store' => $store,
             'store_slug' => $storeSlug,
-            'order' => [
-                'id' => $pedidoId,
-                'customer_name' => $customerName,
-                'total_amount' => $total,
-                'created_at' => date('Y-m-d H:i:s'),
-                'items' => $orderItems
-            ],
+            'order' => $order,
             'whatsapp_url' => $whatsappUrl
         ];
 
@@ -380,4 +385,5 @@ class CartController
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
     }
 }
+
 }
