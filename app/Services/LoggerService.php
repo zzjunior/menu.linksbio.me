@@ -10,7 +10,7 @@ class LoggerService
 
     public function __construct()
     {
-        $this->logger = new Logger('menu.linksbio.me');
+        $this->logger = new Logger('menu.linksbio.me'); //teste
         $this->logger->pushHandler(new StreamHandler(__DIR__ . '/../../storage/logs/app.log', Logger::INFO));
     }
 
