@@ -188,50 +188,55 @@ $app->group('/{store}', function ($group) {
 });
 
 
-// === ROTA PRINTPEDIDO
+//** === ROTA PRINTPEDIDO
 $app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
 
 // === LOGS
-$app->get('/admin/logs', function ($request, $response) {
-    $log = file_get_contents(__DIR__ . '/../storage/logs/app.log');
-    $lines = explode("\n", $log);
-    $html = '<style>
-        body{background:#111;color:#eee;font-family:monospace;}
-        .json-log{background:#222;margin:10px 0;padding:10px;border-radius:6px;}
-        .level{font-weight:bold;}
-        .level-info{color:red;}
-        .level-error{color:#f00;}
-        .level-warning{color:#ff0;}
-        .date{color:green;}
-        .msg{color:#fff;}
-    </style>';
-    $html .= '<h3>Logs</h3>';
-    foreach ($lines as $line) {
-        $line = trim($line);
-        if ($line) {
-            $data = json_decode($line, true);
-            if ($data) {
-                $level = strtolower($data['level_name'] ?? 'info');
-                $html .= '<div class="json-log">';
-                $html .= '<span class="date">' . htmlspecialchars($data['datetime'] ?? '') . '</span> ';
-                $html .= '<span class="level level-' . $level . '">' . htmlspecialchars($data['level_name'] ?? '') . '</span> ';
-                $html .= '<span class="msg">' . htmlspecialchars($data['message'] ?? '') . '</span><br>';
-                if (!empty($data['context'])) {
-                    $html .= '<pre style="background:#333;color:#0ff;padding:5px;">' . htmlspecialchars(json_encode($data['context'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
-                }
-                $html .= '</div>';
-            } else {
-                $html .= '<pre class="json-log">' . htmlspecialchars($line) . '</pre>';
-            }
-        }
-    }
-    $response->getBody()->write($html);
-    return $response;
-});
+//$app->get('/admin/logs', function ($request, $response) {
+    //$log = file_get_contents(__DIR__ . '/../storage/logs/app.log');
+    //$lines = explode("\n", $log);
+    //$html = '<style>
+        //body{background:#111;color:#eee;font-family:monospace;}
+        //.json-log{background:#222;margin:10px 0;padding:10px;border-radius:6px;}
+        //.level{font-weight:bold;}
+        //.level-info{color:red;}
+        //.level-error{color:#f00;}
+       // .level-warning{color:#ff0;}
+        //.date{color:green;}
+       // .msg{color:#fff;}
+   // </style>';
+    //$html .= '<h3>Logs</h3>';
+    //foreach ($lines as $line) {
+    //    $line = trim($line);
+     //   if ($line) {
+     //       $data = json_decode($line, true);
+      //      if ($data) {
+      //         $level = strtolower($data['level_name'] ?? 'info');
+       //         $html .= '<div class="json-log">';
+         //       $html .= '<span class="date">' . htmlspecialchars($data['datetime'] ?? '') . '</span> ';
+           //     $html .= '<span class="level level-' . $level . '">' . htmlspecialchars($data['level_name'] ?? '') . '</span> ';
+             //   $html .= '<span class="msg">' . htmlspecialchars($data['message'] ?? '') . '</span><br>';
+               // if (!empty($data['context'])) {
+                 //   $html .= '<pre style="background:#333;color:#0ff;padding:5px;">' . htmlspecialchars(json_encode($data['context'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) . '</pre>';
+            //    }
+                //$html .= '</div>';
+          //  } else {
+               // $html .= '<pre class="json-log">' . htmlspecialchars($line) . '</pre>';
+        //    }
+       // }
+   // }
+   // $response->getBody()->write($html);
+   // return $response;
+//}); /**/
+
 // Rota padrão - redireciona para admin
 $app->get('/', function (Request $request, Response $response) {
     return $response->withHeader('Location', '/admin/login')->withStatus(302);
-});
+}); 
+/**
+ * Rota para impressão de pedidos
+ */
+$app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
 
 // Roda a aplicação
 $app->run();

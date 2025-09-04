@@ -50,8 +50,8 @@ $errorMiddleware = $app->addErrorMiddleware(
 );
 
 // Logger
-$container->set('logger', function() {
-    return (new \App\Services\LoggerService())->getLogger();
-});
+//$container->set('logger', function() {
+//    return (new \App\Services\LoggerService())->getLogger();
+//});
 
 return $app;

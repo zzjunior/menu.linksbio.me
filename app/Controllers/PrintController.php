@@ -8,13 +8,13 @@ class PrintController
 {
     private \PDO $pdo;
     private $userModel;
-    private $logger;
+    //private $logger;
 
-    public function __construct(\PDO $pdo, $userModel, $logger)
+    public function __construct(\PDO $pdo, $userModel) //, $logger)
     {
         $this->pdo = $pdo;
         $this->userModel = $userModel;
-        $this->logger = $logger;
+        //$this->logger = $logger;
     }
 
 public function printOrder(Request $request, Response $response, array $args): Response
@@ -23,7 +23,7 @@ public function printOrder(Request $request, Response $response, array $args): R
     $orderId = $args['id'] ?? null;
     if (!$orderId) {
         $response->getBody()->write(json_encode(['error' => 'Pedido não encontrado']));
-        $this->logger->error('Erro ao imprimir', ['order_id' => $orderId]);
+        //$this->logger->error('Erro ao imprimir', ['order_id' => $orderId]);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
@@ -34,7 +34,7 @@ public function printOrder(Request $request, Response $response, array $args): R
 
     if (!$order) {
         $response->getBody()->write(json_encode(['error' => 'Pedido não encontrado']));
-        $this->logger->error('Erro ao imprimir *Pedido não encontrado*', ['order_id' => $orderId]);
+        //$this->logger->error('Erro ao imprimir *Pedido não encontrado*', ['order_id' => $orderId]);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
 
@@ -84,7 +84,7 @@ public function printOrder(Request $request, Response $response, array $args): R
 
     $response->getBody()->write(json_encode($printData, JSON_UNESCAPED_UNICODE));
 
-    $this->logger->info('Pedido enviado para impressão', ['order_id' => $orderId]);
+    //$this->logger->info('Pedido enviado para impressão', ['order_id' => $orderId]);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
 }
 }
