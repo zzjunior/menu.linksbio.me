@@ -109,7 +109,7 @@ $container->set(PrintController::class, function ($container) {
     return new PrintController(
         $pdo,
         $container->get(User::class),
-        $container->get('logger') // Adicione o logger aqui!
+        //$container->get('logger') // Adicione o logger aqui!
     );
 });
 
@@ -233,10 +233,6 @@ $app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
 $app->get('/', function (Request $request, Response $response) {
     return $response->withHeader('Location', '/admin/login')->withStatus(302);
 }); 
-/**
- * Rota para impressão de pedidos
- */
-$app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
 
 // Roda a aplicação
 $app->run();
