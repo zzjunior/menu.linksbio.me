@@ -49,4 +49,3 @@ jobs:
             **/.env.example
             **/README.md
             **/.gitignore
-          dangerous-clean-slate: false
