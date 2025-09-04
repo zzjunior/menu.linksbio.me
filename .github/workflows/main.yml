@@ -50,3 +50,4 @@ jobs:
             **/README.md
             **/.gitignore
             **/src/**
+          dangerous-clean-slate: false
