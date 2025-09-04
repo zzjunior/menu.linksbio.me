@@ -82,7 +82,7 @@ public function printOrder(Request $request, Response $response, array $args): R
     $pixQrCode = '00020126460014br.gov.bcb.pix0124fortalecai2025@gmail.com5204000053039865802BR5925Alefe Augusto Lima Da Sil6014RIO DE JANEIRO622805242bf17e522526e2838a7b30ac6304993A';
     $printData[] = ["type"=>3,"value"=>$pixQrCode,"size"=>30,"align"=>1];
 
-    $response->getBody()->write(json_encode($printData, JSON_UNESCAPED_UNICODE));
+    $response->getBody()->write(json_encode($printData, JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT));
 
     //$this->logger->info('Pedido enviado para impressão', ['order_id' => $orderId]);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
