@@ -342,7 +342,7 @@ public function processOrder(Request $request, Response $response, array $args):
 
         // Montar mensagem WhatsApp simples
         $whatsappMessage = "Olá, novo pedido recebido!\nCliente: $customerName\nTelefone: $customerPhone\nEndereço: $customerAddress\nTotal: R$ " . number_format($total, 2, ',', '.') . "\nPedido #$orderId";
-        $whatsappUrl = "https://wa.me/{$store['whatsapp']}?text=" . urlencode($whatsappMessage);
+        $whatsappUrl = "https://wa.me/55{$store['whatsapp']}?text=" . urlencode($whatsappMessage);
 
         // Limpar carrinho
         unset($_SESSION['cart_' . $store['id']]);

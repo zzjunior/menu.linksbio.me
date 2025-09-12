@@ -49,9 +49,10 @@ public function printOrder(Request $request, Response $response, array $args): R
     $printData = [
         ["type"=>0,"content"=>strtoupper($store['store_name']),"bold"=>1,"align"=>1,"format"=>2],
         ["type"=>0,"content"=>"PEDIDO #".$order['id'],"bold"=>1,"align"=>1],
-        ["type"=>0,"content"=>"Cliente: ".$order['customer_name'],"bold"=>0,"align"=>0],
-        ["type"=>0,"content"=>"Endereço: ".$order['customer_address'],"bold"=>0,"align"=>0],
-        ["type"=>0,"content"=>"------------------------------","bold"=>0,"align"=>1]
+        ["type"=>0,"content"=>"Cliente: ".$order['customer_name'],"bold"=>1,"align"=>0],
+        ["type"=>0,"content"=>"Endereço: ".$order['customer_address'],"bold"=>1,"align"=>0],
+        ["type"=>0,"content"=>"------------------------------","bold"=>0,"align"=>1],
+        ["type"=>0,"content"=>"Detalhes do Pedido","bold"=>0,"align"=>1],
     ];
 
     foreach ($items as $item) {
@@ -79,6 +80,7 @@ public function printOrder(Request $request, Response $response, array $args): R
     $printData[] = ["type"=>0,"content"=>"TOTAL: R$ ".number_format($order['total_amount'],2,',','.'),"bold"=>1,"align"=>2];
     $printData[] = ["type"=>0,"content"=>" ","bold"=>0,"align"=>0];
     // Adiciona QR Code PIX no final
+    $printData[] = ["type"=>0,"content"=>"Pague via Pix","bold"=>0,"align"=>1];
     $pixQrCode = '00020126460014br.gov.bcb.pix0124fortalecai2025@gmail.com5204000053039865802BR5925Alefe Augusto Lima Da Sil6014RIO DE JANEIRO622805242bf17e522526e2838a7b30ac6304993A';
     $printData[] = ["type"=>3,"value"=>$pixQrCode,"size"=>30,"align"=>1];
 

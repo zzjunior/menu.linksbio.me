@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?></title>
+    <title>{{ $title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -12,26 +12,27 @@
     <header class="bg-white shadow-sm border-b">
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center">
-                <a href="/<?= $store_slug ?>/carrinho" class="text-purple-600 hover:text-purple-800 mr-4">
+                <a href="/{{ $store_slug }}/carrinho" class="text-purple-600 hover:text-purple-800 mr-4">
                     <i class="fas fa-arrow-left text-xl"></i>
                 </a>
                 <div>
                     <h1 class="text-xl font-bold text-gray-800">Finalizar Pedido</h1>
-                    <p class="text-sm text-gray-600"><?= htmlspecialchars($store['store_name']) ?></p>
+                    <p class="text-sm text-gray-600">{{ $store['store_name'] }}</p>
                 </div>
             </div>
         </div>
     </header>
 
     <div class="container mx-auto px-4 py-6">
-        <?php if ($error): ?>
+        @if ($error)
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <?= htmlspecialchars($error) ?>
+                {{ $error }}
             </div>
-        <?php endif; ?>
+        @endif
 
-        <form method="POST" action="/<?= $store_slug ?>/checkout" class="space-y-6">
+        <form method="POST" action="/{{ $store_slug }}/checkout" class="space-y-6">
+            @csrf
             <!-- Dados do cliente -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">
@@ -120,7 +121,7 @@
 
             <!-- Botões -->
             <div class="flex flex-col sm:flex-row gap-3">
-                <a href="/<?= $store_slug ?>/carrinho" 
+                <a href="/{{ $store_slug }}/carrinho" 
                    class="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition duration-200 text-center">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar ao carrinho

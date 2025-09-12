@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?></title>
+    <title>{{ $title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <!-- { Ativando print do pedido na impressora } -->
 <script>
 window.onload = function() {
-    window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/<?= $order['id'] ?>";
+    window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/{{ $order['id'] }}";
 };
 </script>
 </head>
@@ -31,21 +31,21 @@ window.onload = function() {
                 
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
                     <div class="text-sm text-gray-600 mb-2">
-                        <strong>Pedido #<?= $order['id'] ?></strong>
+                        <strong>Pedido #{{ $order['id'] }}</strong>
                     </div>
                     <div class="text-sm text-gray-600 mb-2">
-                        <strong>Cliente:</strong> <?= htmlspecialchars($order['customer_name']) ?>
+                        <strong>Cliente:</strong> {{ $order['customer_name'] }}
                     </div>
                     <div class="text-sm text-gray-600 mb-2">
-                        <strong>Total:</strong> R$ <?= number_format($order['total_amount'], 2, ',', '.') ?>
+                        <strong>Total:</strong> R$ {{ number_format($order['total_amount'], 2, ',', '.') }}
                     </div>
                     <div class="text-sm text-gray-600">
-                        <strong>Data:</strong> <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?>
+                        <strong>Data:</strong> {{ \Carbon\Carbon::parse($order['created_at'])->format('d/m/Y H:i') }}
                     </div>
                 </div>
 
                 <a 
-                    href="<?= $whatsapp_url ?>" 
+                    href="{{ $whatsapp_url }}" 
                     target="_blank"
                     class="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200 mb-4"
                 >
@@ -54,7 +54,7 @@ window.onload = function() {
                 </a>
 
                 <div class="text-center">
-                    <a href="/<?= $store_slug ?>" class="text-purple-600 hover:text-purple-800">
+                    <a href="/{{ $store_slug }}" class="text-purple-600 hover:text-purple-800">
                         <i class="fas fa-arrow-left mr-1"></i>
                         Voltar ao cardápio
                     </a>
@@ -69,69 +69,69 @@ window.onload = function() {
                 </h2>
 
                 <div class="space-y-3">
-                    <?php foreach ($order['items'] as $item): ?>
+                    @foreach ($order['items'] as $item)
                         <div class="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0">
                             <div class="flex-1">
                                 <div class="font-medium text-gray-800">
-                                    <?= $item['quantity'] ?>x <?= htmlspecialchars($item['product_name']) ?>
+                                    {{ $item['quantity'] }}x {{ $item['product_name'] }}
                                 </div>
                                 
-                                <?php if ($item['size']): ?>
+                                @if (!empty($item['size']))
                                     <div class="text-sm text-gray-600">
-                                        Tamanho: <?= htmlspecialchars($item['size']) ?>
+                                        Tamanho: {{ $item['size'] }}
                                     </div>
-                                <?php endif; ?>
+                                @endif
 
-                                <?php if (!empty($item['ingredients'])): ?>
+                                @if (!empty($item['ingredients']))
                                     <div class="text-sm text-gray-600">
                                         Adicionais: 
-                                        <?php 
-                                        $ingredientNames = array_map(function($ing) {
-                                            $name = $ing['name'];
-                                            if ($ing['quantity'] > 1) {
-                                                $name .= " ({$ing['quantity']}x)";
-                                            }
-                                            return $name;
-                                        }, $item['ingredients']);
-                                        echo implode(', ', $ingredientNames);
-                                        ?>
+                                        @php
+                                            $ingredientNames = collect($item['ingredients'])->map(function($ing) {
+                                                $name = $ing['name'];
+                                                if ($ing['quantity'] > 1) {
+                                                    $name .= " ({$ing['quantity']}x)";
+                                                }
+                                                return $name;
+                                            })->toArray();
+                                        @endphp
+                                        {{ implode(', ', $ingredientNames) }}
                                     </div>
-                                <?php endif; ?>
+                                @endif
 
-                                <?php if ($item['notes']): ?>
+                                @if (!empty($item['notes']))
                                     <div class="text-sm text-gray-600">
-                                        Obs: <?= htmlspecialchars($item['notes']) ?>
+                                        Obs: {{ $item['notes'] }}
                                     </div>
-                                <?php endif; ?>
+                                @endif
                             </div>
                             
                             <div class="text-right ml-4">
                                 <div class="font-medium text-gray-800">
-                                    R$ <?= number_format($item['unit_price'] * $item['quantity'], 2, ',', '.') ?>
+                                    R$ {{ number_format($item['unit_price'] * $item['quantity'], 2, ',', '.') }}
                                 </div>
-                                <?php if (!empty($item['ingredients'])): ?>
-                                    <?php 
-                                    $additionalTotal = 0;
-                                    foreach ($item['ingredients'] as $ingredient) {
-                                        $additionalTotal += $ingredient['price'] * $ingredient['quantity'] * $item['quantity'];
-                                    }
-                                    if ($additionalTotal > 0):
-                                    ?>
+                                @if (!empty($item['ingredients']))
+                                    @php
+                                        $additionalTotal = 0;
+                                        foreach ($item['ingredients'] as $ingredient) {
+                                            $additionalTotal += $ingredient['price'] * $ingredient['quantity'] * $item['quantity'];
+                                        }
+                                    @endphp
+                                    @if ($additionalTotal > 0)
                                         <div class="text-sm text-green-600">
-                                            +R$ <?= number_format($additionalTotal, 2, ',', '.') ?>
+                                            +R$ {{ number_format($additionalTotal, 2, ',', '.') }}
                                         </div>
-                                    <?php endif; ?>
-                                <?php endif; ?>
+                                    @endif
+                                @endif
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    @endforeach
                 </div>
 
                 <div class="border-t pt-4 mt-4">
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-semibold text-gray-800">Total</span>
                         <span class="text-xl font-bold text-purple-600">
-                            R$ <?= number_format($order['total_amount'], 2, ',', '.') ?>
+                            R$ {{ number_format($order['total_amount'], 2, ',', '.') }}
                         </span>
                     </div>
                 </div>
@@ -143,7 +143,7 @@ window.onload = function() {
         // Auto-abrir WhatsApp em 3 segundos
         setTimeout(function() {
             if (confirm('Deseja abrir o WhatsApp automaticamente?')) {
-                window.open('<?= $whatsapp_url ?>', '_blank');
+                window.open('{{ $whatsapp_url }}', '_blank');
             }
         }, 3000);
     </script>

@@ -4,86 +4,45 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-/**
- * Serviço simples para renderização de templates
- */
+use duncan3dc\Laravel\BladeInstance;
+
+
 class TemplateService
 {
-    private string $templatePath;
+    private BladeInstance $blade;
 
-    public function __construct(string $templatePath = null)
+    public function __construct(string $templatePath = null, string $cachePath = null)
     {
-        $this->templatePath = $templatePath ?? __DIR__ . '/../../templates/';
+        $views = $templatePath ?? __DIR__ . '/../../views/templates';
+        $cache = $cachePath ?? __DIR__ . '/../../storage/cache/blade';
+        $this->blade = new BladeInstance($views, $cache);
     }
 
-    /**
-     * Renderiza um template com dados
-     */
     public function render(string $template, array $data = []): string
     {
-        $templateFile = $this->templatePath . $template . '.php';
-        
-        if (!file_exists($templateFile)) {
-            throw new \Exception("Template not found: {$templateFile}");
-        }
-
-        // Extrai variáveis do array de dados
-        extract($data);
-
-        // Inicia buffer de saída
-        ob_start();
-        
-        // Inclui o template
-        include $templateFile;
-        
-        // Retorna o conteúdo capturado
-        return ob_get_clean();
+        return $this->blade->render($template, $data);
     }
 
-    /**
-     * Renderiza um template e escreve no response
-     */
     public function renderResponse($response, $template, $data = [])
     {
-        // Renderiza o template diretamente, sem cache
-        extract($data);
-        ob_start();
-        include $this->getTemplatePath($template);
-        $html = ob_get_clean();
+        $html = $this->render($template, $data);
         $response->getBody()->write($html);
         return $response;
     }
 
-    /**
-     * Renderiza um layout com conteúdo
-     */
     public function renderWithLayout(string $layout, string $content, array $data = []): string
     {
         $data['content'] = $content;
         return $this->render($layout, $data);
     }
 
-    /**
-     * Escapa HTML para segurança
-     */
     public function escape(string $string): string
     {
         return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
     }
 
-    /**
-     * Formata preço em real brasileiro
-     */
     public function formatPrice(float $price): string
     {
         return 'R$ ' . number_format($price, 2, ',', '.');
-    }
-
-    /**
-     * Retorna o caminho completo do template
-     */
-    public function getTemplatePath(string $template): string
-    {
-        return $this->templatePath . $template . '.php';
     }
 }

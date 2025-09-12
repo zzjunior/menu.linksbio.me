@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Login' ?></title>
+    <title>{{ $title ?? 'Login' }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -15,14 +15,15 @@
             <p class="text-gray-600">Acesse seu painel administrativo</p>
         </div>
 
-        <?php if ($error): ?>
+        @if ($error)
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 <i class="fas fa-exclamation-circle mr-2"></i>
-                <?= htmlspecialchars($error) ?>
+                {{ $error }}
             </div>
-        <?php endif; ?>
+        @endif
 
         <form method="POST" action="/admin/login" class="space-y-4">
+            @csrf
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                     <i class="fas fa-envelope mr-1"></i>

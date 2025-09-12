@@ -10,6 +10,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Doctrine\DBAL\DriverManager;
 
 require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../app/helpers.php';
 
 // Carrega configurações
 $settings = require __DIR__ . '/../config/settings.php';

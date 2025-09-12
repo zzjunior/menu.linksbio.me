@@ -58,7 +58,7 @@ class AdminController
             'totalIngredients' => count($this->ingredientModel->getAll($userId))
         ];
 
-        return $this->templateService->renderResponse($response, 'admin/dashboard', $data);
+        return $this->templateService->renderResponse($response, 'admin.dashboard', $data);
     }
 
     // === PRODUTOS ===

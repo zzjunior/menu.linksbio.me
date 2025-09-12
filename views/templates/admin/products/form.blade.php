@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $this->escape($pageTitle) ?></title>
+    <title>{{ $pageTitle }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
@@ -13,14 +13,14 @@
             <div class="flex justify-between items-center py-6">
                 <div class="flex items-center space-x-4">
                     <a href="/admin/products" class="text-gray-500 hover:text-gray-700">← Voltar</a>
-                    <h1 class="text-3xl font-bold text-gray-900"><?= $this->escape($pageTitle) ?></h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ $pageTitle }}</h1>
                 </div>
             </div>
         </div>
     </header>
 
     <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <?php if (isset($error)): ?>
+        @if (isset($error))
             <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
                 <div class="flex">
                     <div class="ml-3">
@@ -28,18 +28,19 @@
                             Erro
                         </h3>
                         <div class="mt-2 text-sm text-red-700">
-                            <?= $this->escape($error) ?>
+                            {{ $error }}
                         </div>
                     </div>
                 </div>
             </div>
-        <?php endif; ?>
+        @endif
 
         <div class="bg-white shadow rounded-lg">
             <form method="POST" 
-                  action="<?= isset($product) ? '/admin/products/' . $product['id'] : '/admin/products' ?>" 
+                  action="{{ isset($product) ? '/admin/products/' . $product['id'] : '/admin/products' }}" 
                   enctype="multipart/form-data" 
                   class="p-6">
+                @csrf
                 <div class="grid grid-cols-1 gap-6">
                     <!-- Nome -->
                     <div>
@@ -50,7 +51,7 @@
                                id="name" 
                                name="name" 
                                required
-                               value="<?= $this->escape($formData['name'] ?? $product['name'] ?? '') ?>"
+                               value="{{ $formData['name'] ?? $product['name'] ?? '' }}"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
@@ -62,7 +63,7 @@
                         <textarea id="description" 
                                   name="description" 
                                   rows="3"
-                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"><?= $this->escape($formData['description'] ?? $product['description'] ?? '') ?></textarea>
+                                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ $formData['description'] ?? $product['description'] ?? '' }}</textarea>
                     </div>
 
                     <!-- Preço e Categoria -->
@@ -77,7 +78,7 @@
                                    step="0.01" 
                                    min="0" 
                                    required
-                                   value="<?= $this->escape($formData['price'] ?? $product['price'] ?? '') ?>"
+                                   value="{{ $formData['price'] ?? $product['price'] ?? '' }}"
                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
 
@@ -90,12 +91,12 @@
                                     required
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Selecione uma categoria</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?= $category['id'] ?>" 
-                                            <?= ($formData['category_id'] ?? $product['category_id'] ?? '') == $category['id'] ? 'selected' : '' ?>>
-                                        <?= $this->escape($category['name']) ?>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category['id'] }}" 
+                                            {{ ($formData['category_id'] ?? $product['category_id'] ?? '') == $category['id'] ? 'selected' : '' }}>
+                                        {{ $category['name'] }}
                                     </option>
-                                <?php endforeach; ?>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -126,14 +127,14 @@
                         </div>
                         
                         <!-- Imagem atual (se existir) -->
-                        <?php if (isset($product['image_url']) && $product['image_url']): ?>
+                        @if (isset($product['image_url']) && $product['image_url'])
                             <div class="mt-4">
                                 <p class="text-sm text-gray-700 mb-2">Imagem atual:</p>
-                                <img src="<?= $this->escape($product['image_url']) ?>" 
+                                <img src="{{ $product['image_url'] }}" 
                                      alt="Imagem atual" 
                                      class="max-w-xs max-h-48 rounded-lg shadow-md">
                             </div>
-                        <?php endif; ?>
+                        @endif
                     </div>
 
                     <!-- URL da Imagem (alternativa) -->
@@ -144,7 +145,7 @@
                         <input type="url" 
                                id="image_url" 
                                name="image_url" 
-                               value="<?= $this->escape($formData['image_url'] ?? $product['image_url'] ?? '') ?>"
+                               value="{{ $formData['image_url'] ?? $product['image_url'] ?? '' }}"
                                placeholder="https://exemplo.com/imagem.jpg"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <p class="mt-1 text-sm text-gray-500">
@@ -168,7 +169,7 @@
                                        id="size_ml" 
                                        name="size_ml" 
                                        min="0"
-                                       value="<?= $this->escape($formData['size_ml'] ?? $product['size_ml'] ?? '') ?>"
+                                       value="{{ $formData['size_ml'] ?? $product['size_ml'] ?? '' }}"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
 
@@ -180,7 +181,7 @@
                                        id="max_ingredients" 
                                        name="max_ingredients" 
                                        min="0"
-                                       value="<?= $this->escape($formData['max_ingredients'] ?? $product['max_ingredients'] ?? '') ?>"
+                                       value="{{ $formData['max_ingredients'] ?? $product['max_ingredients'] ?? '' }}"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <p class="mt-1 text-xs text-gray-500">
                                     Deixe vazio para ilimitado
@@ -195,7 +196,7 @@
                                        id="size_order" 
                                        name="size_order" 
                                        min="0"
-                                       value="<?= $this->escape($formData['size_order'] ?? $product['size_order'] ?? '0') ?>"
+                                       value="{{ $formData['size_order'] ?? $product['size_order'] ?? '0' }}"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <p class="mt-1 text-xs text-gray-500">
                                     Para ordenação (ex: 1=P, 2=M, 3=G)
@@ -211,7 +212,7 @@
                                    name="active" 
                                    type="checkbox" 
                                    value="1"
-                                   <?= ($formData['active'] ?? $product['active'] ?? '1') ? 'checked' : '' ?>
+                                   {{ ($formData['active'] ?? $product['active'] ?? '1') ? 'checked' : '' }}
                                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <label for="active" class="ml-2 block text-sm text-gray-900">
                                 Produto ativo
@@ -231,7 +232,7 @@
                     </a>
                     <button type="submit" 
                             class="bg-blue-600 py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700">
-                        <?= isset($product) ? 'Atualizar' : 'Criar' ?> Produto
+                        {{ isset($product) ? 'Atualizar' : 'Criar' }} Produto
                     </button>
                 </div>
             </form>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?></title>
+    <title>{{ $title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -13,12 +13,12 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <a href="/<?= $store_slug ?>" class="text-purple-600 hover:text-purple-800 mr-4">
+                    <a href="/{{ $store_slug }}" class="text-purple-600 hover:text-purple-800 mr-4">
                         <i class="fas fa-arrow-left text-xl"></i>
                     </a>
                     <div>
                         <h1 class="text-xl font-bold text-gray-800">Carrinho</h1>
-                        <p class="text-sm text-gray-600"><?= htmlspecialchars($store['store_name']) ?></p>
+                        <p class="text-sm text-gray-600">{{ $store['store_name'] }}</p>
                     </div>
                 </div>
             </div>
@@ -31,7 +31,7 @@
     </div>
 <script>
 function renderCart() {
-    const cart = JSON.parse(localStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
     const cartItemsDiv = document.getElementById('cart-items');
     const cartSummaryDiv = document.getElementById('cart-summary');
     cartItemsDiv.innerHTML = '';
@@ -43,7 +43,7 @@ function renderCart() {
                 <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Carrinho vazio</h2>
                 <p class="text-gray-600 mb-6">Adicione alguns produtos deliciosos ao seu carrinho</p>
-                <a href="/<?= $store_slug ?>" 
+                <a href="/{{ $store_slug }}" 
                    class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition duration-200">
                     <i class="fas fa-utensils mr-2"></i>
                     Ver Cardápio
@@ -93,7 +93,7 @@ function renderCart() {
             </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
-            <a href="/<?= $store_slug ?>" 
+            <a href="/{{ $store_slug }}" 
                class="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition duration-200 text-center">
                 <i class="fas fa-plus mr-2"></i>
                 Adicionar mais itens
@@ -109,9 +109,9 @@ function renderCart() {
 }
 
 function removeCartItem(cartId) {
-    let cart = JSON.parse(localStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+    let cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
     cart = cart.filter(item => item.cart_id !== cartId);
-    localStorage.setItem('cart_<?= $store['id'] ?>', JSON.stringify(cart));
+    localStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
     renderCart();
     if (typeof updateCartCount === 'function') updateCartCount();
 }
@@ -125,8 +125,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            const storeId = "<?= $store['id'] ?>";
-            const storeSlug = "<?= $store_slug ?>";
+            const storeId = "{{ $store['id'] }}";
+            const storeSlug = "{{ $store_slug }}";
             const cart = JSON.parse(localStorage.getItem('cart_' + storeId) || '[]');
             fetch('/' + storeSlug + '/carrinho/sync', {
                 method: 'POST',

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <title>{{ $pageTitle }}</title>
     <link rel="stylesheet" href="/assets/css/custom.css">
     <link rel="stylesheet" href="/assets/css/ifood-modal.css">
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
     <meta name="theme-color" content="#8B5CF6">
-    <meta name="description" content="<?= htmlspecialchars($store['store_description'] ?? 'Cardápio digital da sua loja') ?>">
+    <meta name="description" content="{{ $store['store_description'] ?? 'Cardápio digital da sua loja' }}">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
     <link rel="manifest" href="/assets/manifest.json">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,15 +35,15 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-800"><?= htmlspecialchars($store['store_name']) ?></h1>
-                    <?php if ($store['address']): ?>
+                    <h1 class="text-xl font-bold text-gray-800">{{ $store['store_name'] }}</h1>
+                    @if ($store['address'])
                         <p class="text-sm text-gray-600">
                             <i class="fas fa-map-marker-alt mr-1"></i>
-                            <?= htmlspecialchars($store['address']) ?>
+                            {{ $store['address'] }}
                         </p>
-                    <?php endif; ?>
+                    @endif
                 </div>
-                <a href="/<?= $store_slug ?>/carrinho" class="relative bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
+                <a href="/{{ $store_slug }}/carrinho" class="relative bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
                     <i class="fas fa-shopping-cart"></i>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
                 </a>
@@ -52,84 +52,84 @@
     </header>
 
     <!-- Filtros de Categoria -->
-    <?php if (!empty($categories)): ?>
+    @if (!empty($categories))
         <div class="container mx-auto px-4 py-4">
             <div class="flex gap-2 overflow-x-auto pb-2">
-                <a href="/<?= $store_slug ?>" 
+                <a href="/{{ $store_slug }}" 
                    class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                          <?= empty($currentCategory) ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-100' ?>">
+                          {{ empty($currentCategory) ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-100' }}">
                     Todos
                 </a>
-                <?php foreach ($categories as $category): ?>
-                    <a href="/<?= $store_slug ?>?category=<?= $category['id'] ?>" 
+                @foreach ($categories as $category)
+                    <a href="/{{ $store_slug }}?category={{ $category['id'] }}" 
                        class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
-                              <?= $currentCategory == $category['id'] ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-100' ?>">
-                        <?= htmlspecialchars($category['name']) ?>
+                              {{ $currentCategory == $category['id'] ? 'bg-primary text-white' : 'bg-white text-gray-700 hover:bg-gray-100' }}">
+                        {{ $category['name'] }}
                     </a>
-                <?php endforeach; ?>
+                @endforeach
             </div>
         </div>
-    <?php endif; ?>
+    @endif
 
     <!-- Produtos -->
     <main class="container mx-auto px-4 pb-6">
-        <?php if (empty($products)): ?>
+        @if (empty($products))
             <div class="text-center py-12">
                 <div class="text-6xl mb-4">🤷‍♀️</div>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum produto encontrado</h3>
                 <p class="text-gray-600">Adicione produtos ao seu cardápio no painel admin</p>
             </div>
-        <?php else: ?>
+        @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <?php foreach ($products as $product): ?>
+                @foreach ($products as $product)
                     <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-                        <?php if ($product['image_url']): ?>
+                        @if ($product['image_url'])
                             <div class="h-40 bg-gradient-to-br from-primary/20 to-accent/20 relative overflow-hidden">
-                                <img src="<?= htmlspecialchars($product['image_url']) ?>" 
-                                     alt="<?= htmlspecialchars($product['name']) ?>"
+                                <img src="{{ $product['image_url'] }}" 
+                                     alt="{{ $product['name'] }}"
                                      class="w-full h-full object-cover">
                             </div>
-                        <?php else: ?>
+                        @else
                             <div class="h-40 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                                 <span class="text-4xl">🍇</span>
                             </div>
-                        <?php endif; ?>
+                        @endif
                             
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="text-lg font-semibold text-gray-900 leading-tight">
-                                    <?= htmlspecialchars($product['name']) ?>
-                                    <?php if ($product['size_ml']): ?>
-                                        <span class="text-sm text-gray-500">(<?= $product['size_ml'] ?>ml)</span>
-                                    <?php endif; ?>
+                                    {{ $product['name'] }}
+                                    @if ($product['size_ml'])
+                                        <span class="text-sm text-gray-500">({{ $product['size_ml'] }}ml)</span>
+                                    @endif
                                 </h3>
                                 <span class="text-primary font-bold text-lg">
-                                    R$ <?= number_format($product['price'], 2, ',', '.') ?>
+                                    R$ {{ number_format($product['price'], 2, ',', '.') }}
                                 </span>
                             </div>
                             
-                            <?php if ($product['description']): ?>
+                            @if ($product['description'])
                                 <p class="text-gray-600 text-sm mb-3">
-                                    <?= htmlspecialchars($product['description']) ?>
+                                    {{ $product['description'] }}
                                 </p>
-                            <?php endif; ?>
+                            @endif
                             
-                            <?php if ($product['max_ingredients'] > 0): ?>
-                                <button onclick="openCustomizeModal(<?= $product['id'] ?>)" 
+                            @if ($product['max_ingredients'] > 0)
+                                <button onclick="openCustomizeModal({{ $product['id'] }})" 
                                         class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
                                     🎯 Monte o seu
                                 </button>
-                            <?php else: ?>
-                                <button onclick="addToCart(<?= $product['id'] ?>, '<?= addslashes($product['name']) ?>', <?= $product['price'] ?>)"
+                            @else
+                                <button onclick="addToCart({{ $product['id'] }}, '{{ addslashes($product['name']) }}', {{ $product['price'] }})"
                                         class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
                                     🛒 Adicionar ao Pedido
                                 </button>
-                            <?php endif; ?>
+                            @endif
                         </div>
                     </div>
-                <?php endforeach; ?>
+                @endforeach
             </div>
-        <?php endif; ?>
+        @endif
     </main>
 
     <!-- Modal de Personalização -->
@@ -171,13 +171,13 @@
 
         // Atualizar contador do carrinho
         function updateCartCount() {
-            const cart = JSON.parse(sessionStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             document.getElementById('cart-count').textContent = cart.length;
         }
 
         // Adicionar produto simples ao carrinho
         function addToCart(productId, productName, price) {
-            const cart = JSON.parse(sessionStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             cart.push({
                 cart_id: Date.now().toString(),
                 product_id: productId,
@@ -188,7 +188,7 @@
                 notes: '',
                 size: ''
             });
-            sessionStorage.setItem('cart_<?= $store['id'] ?>', JSON.stringify(cart));
+            sessionStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
             updateCartCount();
             
             // Feedback visual
@@ -198,7 +198,7 @@
         // Abrir modal de personalização
         async function openCustomizeModal(productId) {
             try {
-                const response = await fetch(`/<?= $store_slug ?>/api/product/${productId}`);
+                const response = await fetch(`/{{ $store_slug }}/api/product/${productId}`);
                 const product = await response.json();
                 
                 if (product.error) {
@@ -314,7 +314,7 @@
                 ingredients[checkbox.dataset.id] = 1;
             });
 
-            const cart = JSON.parse(sessionStorage.getItem('cart_<?= $store['id'] ?>') || '[]');
+            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             cart.push({
                 cart_id: Date.now().toString(),
                 product_id: currentProduct.id,
@@ -326,7 +326,7 @@
                 size: ''
             });
 
-            sessionStorage.setItem('cart_<?= $store['id'] ?>', JSON.stringify(cart));
+            sessionStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
             updateCartCount();
             closeCustomizeModal();
             

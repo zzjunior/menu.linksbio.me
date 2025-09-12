@@ -15,11 +15,13 @@ composer.phar
 *.log
 error.log
 access.log
+/storage/logs/*
 
 # Cache
 /cache/
 /tmp/
 .cache/
+/storage/cache/blade/*
 
 # Uploads
 /public/uploads/*

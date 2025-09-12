@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <title>{{ $pageTitle }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -13,7 +13,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900"><?= htmlspecialchars($store['store_name']) ?></h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ $store['store_name'] }}</h1>
                     <p class="text-gray-600">Painel Administrativo</p>
                 </div>
             <!---logo upload--->
@@ -25,13 +25,13 @@
             </label>
             <input type="file" id="logo-upload" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
             </form>
-            <?php if (!empty($store['logo'])): ?>
-            <img src="<?= htmlspecialchars($store['logo']) ?>" alt="Logo da loja" class="h-10 rounded shadow">
-            <?php endif; ?>
+            @if (!empty($store['logo']))
+            <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 rounded shadow">
+            @endif
         </div>
         
                 <div class="flex items-center space-x-4">
-                    <a href="/<?= htmlspecialchars($store['store_slug']) ?>" 
+                    <a href="/{{ $store['store_slug'] }}" 
                        target="_blank"
                        class="text-blue-600 hover:text-blue-800">
                         <i class="fas fa-external-link-alt mr-1"></i>
@@ -63,7 +63,7 @@
                                     Total de Produtos
                                 </dt>
                                 <dd class="text-lg font-medium text-gray-900">
-                                    <?= $totalProducts ?>
+                                    {{ $totalProducts }}
                                 </dd>
                             </dl>
                         </div>
@@ -85,7 +85,7 @@
                                     Categorias
                                 </dt>
                                 <dd class="text-lg font-medium text-gray-900">
-                                    <?= $totalCategories ?>
+                                    {{ $totalCategories }}
                                 </dd>
                             </dl>
                         </div>
@@ -107,7 +107,7 @@
                                     Ingredientes
                                 </dt>
                                 <dd class="text-lg font-medium text-gray-900">
-                                    <?= $totalIngredients ?>
+                                    {{ $totalIngredients }}
                                 </dd>
                             </dl>
                         </div>

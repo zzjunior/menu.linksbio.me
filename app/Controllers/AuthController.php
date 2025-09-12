@@ -32,7 +32,7 @@ class AuthController
         
         unset($_SESSION['error']);
         
-        return $this->templateService->renderResponse($response, 'auth/login', $data);
+        return $this->templateService->renderResponse($response, 'auth.login', $data);
     }
 
     /**
@@ -46,7 +46,7 @@ class AuthController
 
         if (empty($email) || empty($password)) {
             $_SESSION['error'] = 'Email e senha são obrigatórios';
-            return $response->withHeader('Location', '/admin/login')->withStatus(302);
+            return $response->withHeader('Location', 'admin/login')->withStatus(302);
         }
 
         $user = $this->userModel->findByEmail($email);
