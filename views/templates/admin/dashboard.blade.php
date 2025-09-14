@@ -152,6 +152,55 @@
                 </div>
             </div>
         </div>
+
+                <!-- Pedidos Recentes -->
+        <div class="bg-white shadow rounded-lg mb-8 mt-5">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-receipt mr-2 text-blue-600"></i> Últimos Pedidos
+                </h3>
+                @if (empty($recentOrders))
+                    <div class="text-gray-500 text-center py-8">Nenhum pedido recente.</div>
+                @else
+                    <div class="space-y-6">
+                        @foreach ($recentOrders as $order)
+                            <div class="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between bg-gray-50">
+                                <div class="flex-1">
+                                    <div class="flex flex-col md:flex-row md:items-center md:space-x-4">
+                                        <div class="font-semibold text-gray-900 text-base">
+                                            {{ $order['customer_name'] }}
+                                            <span class="text-xs text-gray-500 ml-2">({{ $order['customer_phone'] }})</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1 md:mt-0">{{ $order['customer_address'] }}</div>
+                                    </div>
+                                    <div class="flex flex-wrap items-center mt-2 space-x-2">
+                                        <span class="text-xs text-gray-600">{{ date('d/m/Y H:i', strtotime($order['created_at'])) }}</span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ ucfirst($order['status']) }}</span>
+                                        <span class="text-sm font-bold text-gray-900 ml-2">R$ {{ number_format($order['total_amount'], 2, ',', '.') }}</span>
+                                    </div>
+                                    @if (!empty($order['items']))
+                                        <ul class="mt-2 ml-2 text-sm text-gray-800 space-y-1">
+                                            @foreach ($order['items'] as $item)
+                                                <li>
+                                                    <span class="font-medium">{{ $item['product_name'] }}</span>
+                                                    <span class="text-xs text-gray-500">x{{ $item['quantity'] }}</span>
+                                                    @if (!empty($item['ingredients']))
+                                                        <span class="text-xs text-gray-500">- {{ implode(', ', $item['ingredients']) }}</span>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                    @if (!empty($order['notes']))
+                                        <div class="mt-1 text-xs text-yellow-700 bg-yellow-50 rounded p-2">Obs: {{ $order['notes'] }}</div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
     </main>
 </body>
 </html>

@@ -35,25 +35,65 @@
                 </a>
             </div>
         @else
-            <div class="bg-white shadow overflow-hidden rounded-lg">
+            <!-- Grid responsivo para mobile -->
+            <div class="md:hidden grid grid-cols-1 gap-4">
+                @foreach ($products as $product)
+                    <div class="bg-white shadow rounded-lg p-4 flex items-center {{ $product['active'] ? '' : 'bg-gray-50 opacity-75' }}">
+                        <div class="flex-shrink-0 h-16 w-16">
+                            @if ($product['image_url'])
+                                <img class="h-16 w-16 rounded-lg object-cover" src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}">
+                            @else
+                                <div class="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <span class="text-gray-400 text-2xl">🍇</span>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <div class="flex justify-between items-center">
+                                <div class="text-base font-semibold text-gray-900">
+                                    {{ $product['name'] }}
+                                    @if ($product['size_ml'])
+                                        <span class="text-gray-500 text-sm">({{ $product['size_ml'] }}ml)</span>
+                                    @endif
+                                </div>
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {{ $product['category_name'] ?? 'Sem categoria' }}
+                                </span>
+                            </div>
+                            @if ($product['description'])
+                                <div class="text-xs text-gray-500 mt-1 truncate">{{ $product['description'] }}</div>
+                            @endif
+                            <div class="flex items-center justify-between mt-2">
+                                <div class="text-sm font-bold text-gray-900">R$ {{ number_format($product['price'], 2, ',', '.') }}</div>
+                                <div>
+                                    @if ($product['active'])
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
+                                    @else
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inativo</span>
+                                    @endif
+                                </div>
+                                <div class="flex space-x-2 ml-2">
+                                    <a href="/admin/products/{{ $product['id'] }}/edit" class="text-blue-600 hover:text-blue-900 text-xs">Editar</a>
+                                    <form method="POST" action="/admin/products/{{ $product['id'] }}/delete" class="inline" onsubmit="return confirm('Tem certeza que deseja remover este produto?')">
+                                        @csrf
+                                        <button type="submit" class="text-red-600 hover:text-red-900 text-xs">Remover</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <!-- Tabela para desktop -->
+            <div class="hidden md:block bg-white shadow overflow-hidden rounded-lg">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Produto
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Categoria
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Preço
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Ações
-                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -63,9 +103,7 @@
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-12 w-12">
                                             @if ($product['image_url'])
-                                                <img class="h-12 w-12 rounded-lg object-cover" 
-                                                     src="{{ $product['image_url'] }}" 
-                                                     alt="{{ $product['name'] }}">
+                                                <img class="h-12 w-12 rounded-lg object-cover" src="{{ $product['image_url'] }}" alt="{{ $product['name'] }}">
                                             @else
                                                 <div class="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
                                                     <span class="text-gray-400 text-xl">🍇</span>
@@ -80,45 +118,28 @@
                                                 @endif
                                             </div>
                                             @if ($product['description'])
-                                                <div class="text-sm text-gray-500 max-w-xs truncate">
-                                                    {{ $product['description'] }}
-                                                </div>
+                                                <div class="text-sm text-gray-500 max-w-xs truncate">{{ $product['description'] }}</div>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                        {{ $product['category_name'] ?? 'Sem categoria' }}
-                                    </span>
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $product['category_name'] ?? 'Sem categoria' }}</span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    R$ {{ number_format($product['price'], 2, ',', '.') }}
-                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">R$ {{ number_format($product['price'], 2, ',', '.') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @if ($product['active'])
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                            Ativo
-                                        </span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
                                     @else
-                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                            Inativo
-                                        </span>
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inativo</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <a href="/admin/products/{{ $product['id'] }}/edit" 
-                                           class="text-blue-600 hover:text-blue-900">
-                                            Editar
-                                        </a>
-                                        <form method="POST" action="/admin/products/{{ $product['id'] }}/delete" 
-                                              class="inline" 
-                                              onsubmit="return confirm('Tem certeza que deseja remover este produto?')">
+                                        <a href="/admin/products/{{ $product['id'] }}/edit" class="text-blue-600 hover:text-blue-900">Editar</a>
+                                        <form method="POST" action="/admin/products/{{ $product['id'] }}/delete" class="inline" onsubmit="return confirm('Tem certeza que deseja remover este produto?')">
                                             @csrf
-                                            <button type="submit" class="text-red-600 hover:text-red-900">
-                                                Remover
-                                            </button>
+                                            <button type="submit" class="text-red-600 hover:text-red-900">Remover</button>
                                         </form>
                                     </div>
                                 </td>

@@ -9,6 +9,11 @@ namespace App\Models;
  */
 class Product extends BaseModel
 {
+    /**
+     * Busca os limites de ingredientes por tipo para um produto
+     * @param int $productId
+     * @return array Ex: ['cremes' => 2, 'frutas' => 3]
+     */
     private const TABLE = 'products';
 
     /**
@@ -120,7 +125,7 @@ class Product extends BaseModel
             'created_at' => date('Y-m-d H:i:s')
         ];
 
-        return $this->insert(self::TABLE, $productData);
+    return $this->insert('products', $productData);
     }
 
     /**
@@ -141,7 +146,7 @@ class Product extends BaseModel
             'updated_at' => date('Y-m-d H:i:s')
         ];
 
-        return $this->update(self::TABLE, $id, $productData);
+    return $this->update('products', $id, $productData);
     }
 
     /**
@@ -149,7 +154,7 @@ class Product extends BaseModel
      */
     public function deleteProduct(int $id): bool
     {
-        return $this->update(self::TABLE, $id, [
+    return $this->update('products', $id, [
             'active' => 0,
             'updated_at' => date('Y-m-d H:i:s')
         ]);
@@ -171,5 +176,42 @@ class Product extends BaseModel
         $result = $stmt->executeQuery();
         
         return $result->fetchAllAssociative();
+    }
+    /**
+     * Salva os limites de ingredientes por tipo para um produto
+     * @param int $productId
+     * @param array $limits Ex: ['cremes' => 2, 'frutas' => 3]
+     */
+    public function saveMaxIngredientsProduct(int $productId, array $limits): void
+    {
+        // Remove antigos
+        $sqlDelete = "DELETE FROM max_ingredients_product WHERE product_id = ?";
+        $this->db->prepare($sqlDelete)->executeStatement([$productId]);
+
+        // Insere novos
+        $sqlInsert = "INSERT INTO max_ingredients_product (product_id, ingredient_type, max_quantity) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($sqlInsert);
+        foreach ($limits as $type => $max) {
+            if ($type !== '' && is_numeric($max)) {
+                $stmt->executeStatement([$productId, $type, (int)$max]);
+            }
+        }
+    }
+
+    /**
+     * Busca os limites de ingredientes por tipo para um produto
+     * @param int $productId
+     * @return array Ex: ['cremes' => 2, 'frutas' => 3]
+     */
+    public function getMaxIngredientsType(int $productId): array
+    {
+        $sql = "SELECT ingredient_type, max_quantity FROM max_ingredients_product WHERE product_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$productId]);
+        $out = [];
+        foreach ($result->fetchAllAssociative() as $row) {
+            $out[$row['ingredient_type']] = $row['max_quantity'];
+        }
+        return $out;
     }
 }

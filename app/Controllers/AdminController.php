@@ -171,8 +171,13 @@ class AdminController
             }
 
             $data['user_id'] = $_SESSION['user_id'];
-            $this->productModel->create($data);
-            
+            $productId = $this->productModel->create($data); // Precisa retornar o ID do produto criado
+
+            // Salvar limites de ingredientes por tipo, se enviados
+            if (isset($data['max_ingredients_product']) && is_array($data['max_ingredients_product'])) {
+                $this->productModel->saveMaxIngredientsProduct($productId, $data['max_ingredients_product']);
+            }
+
             return $response
                 ->withHeader('Location', '/admin/products')
                 ->withStatus(302);
@@ -198,7 +203,7 @@ class AdminController
     {
         $productId = (int) $args['id'];
         $product = $this->productModel->getById($productId);
-        
+
         if (!$product) {
             return $response->withStatus(404);
         }
@@ -220,12 +225,16 @@ class AdminController
                 }
             }
         }
-        
+
+        // Buscar limites atuais de ingredientes por tipo para o produto
+        $maxIngredientsType = $this->productModel->getMaxIngredientsType($productId);
+
         $data = [
             'pageTitle' => 'Editar Produto',
             'product' => $product,
             'categories' => $categories,
-            'ingredientTypes' => $ingredientTypes
+            'ingredientTypes' => $ingredientTypes,
+            'maxIngredientsType' => $maxIngredientsType
         ];
 
         return $this->templateService->renderResponse($response, 'admin/products/form', $data);
@@ -250,7 +259,12 @@ class AdminController
             }
 
             $this->productModel->updateProduct($productId, $data);
-            
+
+            // Atualizar limites de ingredientes por tipo, se enviados
+            if (isset($data['max_ingredients_product']) && is_array($data['max_ingredients_product'])) {
+                $this->productModel->saveMaxIngredientsProduct($productId, $data['max_ingredients_product']);
+            }
+
             return $response
                 ->withHeader('Location', '/admin/products')
                 ->withStatus(302);

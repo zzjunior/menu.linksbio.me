@@ -213,12 +213,12 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         {{ ucfirst($type) }}
                     </label>
-                    <input type="number"
-                           name="max_ingredients_type[{{ $type }}]"
-                           min="0"
-                           value="{{ $formData['max_ingredients_type'][$type] ?? $maxIngredientsType[$type] ?? '' }}"
-                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                           placeholder="Ilimitado">
+              <input type="number"
+                  name="max_ingredients_product[{{ $type }}]"
+                  min="0"
+                  value="{{ $formData['max_ingredients_product'][$type] ?? $maxIngredientsType[$type] ?? '' }}"
+                  class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Ilimitado">
                 </div>
             @endforeach
         </div>

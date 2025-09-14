@@ -200,12 +200,12 @@ class Ingredient extends BaseModel
     {
         if (empty($productIds)) return [];
         $placeholders = implode(',', array_fill(0, count($productIds), '?'));
-        $sql = "SELECT product_id, type, max_quantity FROM max_ingredients_product WHERE product_id IN ($placeholders)";
+    $sql = "SELECT product_id, ingredient_type, max_quantity FROM max_ingredients_product WHERE product_id IN ($placeholders)";
         $stmt = $this->db->prepare($sql);
         $result = $stmt->executeQuery($productIds);
         $rules = [];
         foreach ($result->fetchAllAssociative() as $row) {
-            $rules[$row['product_id']][$row['type']] = (int)$row['max_quantity'];
+            $rules[$row['product_id']][$row['ingredient_type']] = (int)$row['max_quantity'];
         }
         return $rules;
     }
