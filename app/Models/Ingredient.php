@@ -190,4 +190,23 @@ class Ingredient extends BaseModel
         
         return array_column($result->fetchAllAssociative(), 'type');
     }
+
+        /**
+     * Busca regras de máximo de ingredientes por produto e tipo
+     * @param int[] $productIds
+     * @return array [product_id][type] => max_quantity
+     */
+    public function getMaxIngredientsRules(array $productIds): array
+    {
+        if (empty($productIds)) return [];
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $sql = "SELECT product_id, type, max_quantity FROM max_ingredients_product WHERE product_id IN ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery($productIds);
+        $rules = [];
+        foreach ($result->fetchAllAssociative() as $row) {
+            $rules[$row['product_id']][$row['type']] = (int)$row['max_quantity'];
+        }
+        return $rules;
+    }
 }

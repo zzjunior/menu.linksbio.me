@@ -153,57 +153,80 @@
                         </p>
                     </div>
 
-                    <!-- Configurações de Açaí -->
-                    <div class="border-t pt-6">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Configurações Específicas de Açaí</h3>
-                        <p class="text-sm text-gray-600 mb-4">
-                            Preencha apenas se este produto for um açaí que pode ser personalizado
-                        </p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label for="size_ml" class="block text-sm font-medium text-gray-700">
-                                    Tamanho (ml)
-                                </label>
-                                <input type="number" 
-                                       id="size_ml" 
-                                       name="size_ml" 
-                                       min="0"
-                                       value="{{ $formData['size_ml'] ?? $product['size_ml'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </div>
+<!-- Configurações de Açaí -->
+<div class="border-t pt-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Configurações Específicas de Açaí</h3>
+    <p class="text-sm text-gray-600 mb-4">
+        Preencha apenas se este produto for um açaí que pode ser personalizado
+    </p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+            <label for="size_ml" class="block text-sm font-medium text-gray-700">
+                Tamanho (ml)
+            </label>
+            <input type="number" 
+                   id="size_ml" 
+                   name="size_ml" 
+                   min="0"
+                   value="{{ $formData['size_ml'] ?? $product['size_ml'] ?? '' }}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        </div>
 
-                            <div>
-                                <label for="max_ingredients" class="block text-sm font-medium text-gray-700">
-                                    Máx. Ingredientes
-                                </label>
-                                <input type="number" 
-                                       id="max_ingredients" 
-                                       name="max_ingredients" 
-                                       min="0"
-                                       value="{{ $formData['max_ingredients'] ?? $product['max_ingredients'] ?? '' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Deixe vazio para ilimitado
-                                </p>
-                            </div>
+        <div>
+            <label for="max_ingredients" class="block text-sm font-medium text-gray-700">
+                Máx. Ingredientes (total)
+            </label>
+            <input type="number" 
+                   id="max_ingredients" 
+                   name="max_ingredients" 
+                   min="0"
+                   value="{{ $formData['max_ingredients'] ?? $product['max_ingredients'] ?? '' }}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <p class="mt-1 text-xs text-gray-500">
+                Deixe vazio para ilimitado
+            </p>
+        </div>
 
-                            <div>
-                                <label for="size_order" class="block text-sm font-medium text-gray-700">
-                                    Ordem de Tamanho
-                                </label>
-                                <input type="number" 
-                                       id="size_order" 
-                                       name="size_order" 
-                                       min="0"
-                                       value="{{ $formData['size_order'] ?? $product['size_order'] ?? '0' }}"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Para ordenação (ex: 1=P, 2=M, 3=G)
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+        <div>
+            <label for="size_order" class="block text-sm font-medium text-gray-700">
+                Ordem de Tamanho
+            </label>
+            <input type="number" 
+                   id="size_order" 
+                   name="size_order" 
+                   min="0"
+                   value="{{ $formData['size_order'] ?? $product['size_order'] ?? '0' }}"
+                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <p class="mt-1 text-xs text-gray-500">
+                Para ordenação (ex: 1=P, 2=M, 3=G)
+            </p>
+        </div>
+    </div>
+
+    <!-- Máximo de ingredientes por tipo -->
+    <div class="mt-6">
+        <h4 class="text-md font-semibold text-gray-800 mb-2">Máx. Ingredientes por Tipo</h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @foreach ($ingredientTypes as $type)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ ucfirst($type) }}
+                    </label>
+                    <input type="number"
+                           name="max_ingredients_type[{{ $type }}]"
+                           min="0"
+                           value="{{ $formData['max_ingredients_type'][$type] ?? $maxIngredientsType[$type] ?? '' }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                           placeholder="Ilimitado">
+                </div>
+            @endforeach
+        </div>
+        <p class="mt-2 text-xs text-gray-500">
+            Deixe em branco para ilimitado. Exemplo: 2 caldas, 3 complementos, etc.
+        </p>
+    </div>
+</div>
 
                     <!-- Status -->
                     <div>

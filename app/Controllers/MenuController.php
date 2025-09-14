@@ -71,12 +71,16 @@ class MenuController
             $ingredientsByType[$ingredient['type']][] = $ingredient;
         }
 
+        // Buscar regras de máximo de ingredientes por produto e tipo
+        $maxIngredientsRules = $this->ingredientModel->getMaxIngredientsRules(array_column($products, 'id'));
+
         $data = [
             'store' => $store,
             'store_slug' => $storeSlug,
             'categories' => $categories,
             'products' => $products,
             'ingredients' => $ingredientsByType,
+            'maxIngredientsRules' => $maxIngredientsRules,
             'currentCategory' => $categoryFilter,
             'pageTitle' => $store['store_name']
         ];

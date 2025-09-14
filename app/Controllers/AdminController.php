@@ -86,10 +86,26 @@ class AdminController
     {
         $userId = $_SESSION['user_id'];
         $categories = $this->categoryModel->getAll($userId);
-        
+
+        // Buscar tipos únicos de ingredientes do usuário
+        $ingredients = $this->ingredientModel->getAll($userId);
+        $ingredientTypes = [];
+        foreach ($ingredients as $ingredient) {
+            if (!empty($ingredient['type'])) {
+                // Suporta múltiplos tipos separados por vírgula
+                foreach (explode(',', $ingredient['type']) as $type) {
+                    $type = trim($type);
+                    if ($type && !in_array($type, $ingredientTypes)) {
+                        $ingredientTypes[] = $type;
+                    }
+                }
+            }
+        }
+
         $data = [
             'pageTitle' => 'Novo Produto',
-            'categories' => $categories
+            'categories' => $categories,
+            'ingredientTypes' => $ingredientTypes
         ];
 
         return $this->templateService->renderResponse($response, 'admin/products/form', $data);
@@ -187,18 +203,32 @@ class AdminController
             return $response->withStatus(404);
         }
 
-        $categories = $this->categoryModel->getAll($_SESSION['user_id']);
+        $userId = $_SESSION['user_id'];
+        $categories = $this->categoryModel->getAll($userId);
+
+        // Buscar tipos únicos de ingredientes do usuário
+        $ingredients = $this->ingredientModel->getAll($userId);
+        $ingredientTypes = [];
+        foreach ($ingredients as $ingredient) {
+            if (!empty($ingredient['type'])) {
+                // Suporta múltiplos tipos separados por vírgula
+                foreach (explode(',', $ingredient['type']) as $type) {
+                    $type = trim($type);
+                    if ($type && !in_array($type, $ingredientTypes)) {
+                        $ingredientTypes[] = $type;
+                    }
+                }
+            }
+        }
         
         $data = [
             'pageTitle' => 'Editar Produto',
             'product' => $product,
-            'categories' => $categories
+            'categories' => $categories,
+            'ingredientTypes' => $ingredientTypes
         ];
 
-        $html = $this->templateService->render('admin/products/form', $data);
-        $response->getBody()->write($html);
-        
-        return $response->withHeader('Content-Type', 'text/html');
+        return $this->templateService->renderResponse($response, 'admin/products/form', $data);
     }
 
     /**

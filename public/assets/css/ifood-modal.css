@@ -172,3 +172,14 @@
 .ifood-modal-ingredients::-webkit-scrollbar-thumb:hover {
     background: #dc2626;
 }
+.scrollbar-thin::-webkit-scrollbar {
+    height: 6px;
+}
+.scrollbar-thumb-primary::-webkit-scrollbar-thumb {
+    background: #8B5CF6;
+    border-radius: 3px;
+}
+.scrollbar-track-gray-200::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
