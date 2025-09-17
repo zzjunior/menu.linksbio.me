@@ -35,7 +35,9 @@ function printWithQZTray(printData) {
     }
     // Exemplo: imprime texto simples (ajuste conforme seu layout)
     const config = qz.configs.create(null); // null = impressora padrão
-    const data = printData.map(line => line.content || '');
+    const data = Array.isArray(printData)
+    ? printData.map(line => line.content || '')
+    : Object.values(printData).map(line => line.content || '');
     qz.print(config, data).catch(err => {
         alert('Erro ao imprimir: ' + err);
     });
