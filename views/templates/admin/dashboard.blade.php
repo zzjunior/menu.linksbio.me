@@ -6,6 +6,7 @@
     <title>{{ $pageTitle }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/rsvp/4.8.5/rsvp.min.js"></script> {{-- Ativando biblioteca RSVP necessária para QZ Tray --}}
     <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.1.0/qz-tray.js"></script> {{-- Ativando QZ Tray para impressão direta --}}
 </head>
 <body class="bg-gray-100">
