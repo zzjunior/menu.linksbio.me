@@ -6,6 +6,7 @@
     <title>{{ $pageTitle }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.1.0/qz-tray.js"></script> {{-- Ativando QZ Tray para impressão direta --}}
 </head>
 <body class="bg-gray-100">
     <!-- Header -->
@@ -253,5 +254,29 @@
             </div>
         </div>
     </main>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="assets/js/admin-print-poll.js"></script>
+    <script>
+        // Função para abrir a janela de impressão
+document.querySelectorAll('.print-btn').forEach(button => {
+    button.addEventListener('click', async () => {
+        const orderId = button.getAttribute('data-order-id');
+        if (!window.qz) {
+            alert('QZ Tray não está disponível. Instale e permita o acesso.');
+            return;
+        }
+        try {
+            const resp = await fetch('/admin/print-order/' + orderId);
+            if (!resp.ok) throw new Error('Erro ao buscar dados de impressão');
+            const printData = await resp.json();
+            const config = qz.configs.create(null); // impressora padrão
+            const data = printData.map(line => line.content || '');
+            await qz.print(config, data);
+        } catch (e) {
+            alert('Erro ao imprimir: ' + (e.message || e));
+        }
+    });
+});
+    </script>
 </body>
 </html>

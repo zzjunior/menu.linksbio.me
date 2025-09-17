@@ -192,6 +192,7 @@ $app->group('/{store}', function ($group) {
 
 //** === ROTA PRINTPEDIDO
 $app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
+$app->get('/admin/print-order/{id}', [PrintController::class, 'printOrder']);
 
 // === LOGS
 //$app->get('/admin/logs', function ($request, $response) {
