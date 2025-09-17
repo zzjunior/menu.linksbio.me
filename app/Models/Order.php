@@ -4,6 +4,13 @@ namespace App\Models;
 
 class Order extends BaseModel
 {
+    /**
+     * Retorna a conexão DBAL (Doctrine Connection)
+     */
+    public function getConnection()
+    {
+        return $this->db;
+    }
     public function create($data)
     {
         return $this->insert('orders', $data);
@@ -111,4 +118,5 @@ class Order extends BaseModel
         
         return $message;
     }
+        
 }

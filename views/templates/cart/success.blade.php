@@ -9,6 +9,13 @@
     
     <!-- { Ativando print do pedido na impressora } -->
 <script>
+    // Limpa o carrinho do localStorage ao exibir a tela de sucesso
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            localStorage.removeItem('cart_{{ $store['id'] }}');
+            if (typeof updateCartCount === 'function') updateCartCount();
+        } catch (e) {}
+    });
 window.onload = function() {
     window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/{{ $order['id'] }}";
 };

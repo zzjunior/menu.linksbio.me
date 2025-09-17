@@ -138,6 +138,22 @@
     </div>
 
     <script>
+        // Busca dados do cliente no backend ao digitar telefone
+        async function autofillCustomerDataFromBackend() {
+            const phone = document.getElementById('customer_phone').value.replace(/\D/g, '');
+            if (phone.length >= 8) {
+                try {
+                    const resp = await fetch(`/api/last-order-by-phone?phone=${encodeURIComponent(phone)}`);
+                    if (!resp.ok) return;
+                    const obj = await resp.json();
+                    if (obj.customer_name) document.getElementById('customer_name').value = obj.customer_name;
+                    if (obj.customer_address) document.getElementById('customer_address').value = obj.customer_address;
+                    if (obj.notes) document.getElementById('notes').value = obj.notes;
+                } catch (e) {}
+            }
+        }
+
+        document.getElementById('customer_phone').addEventListener('blur', autofillCustomerDataFromBackend);
         // Formatação do telefone
         document.getElementById('customer_phone').addEventListener('input', function() {
             let value = this.value.replace(/\D/g, '');

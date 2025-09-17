@@ -12,38 +12,83 @@
     <header class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-6">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ $store['store_name'] }}</h1>
-                    <p class="text-gray-600">Painel Administrativo</p>
+                <!-- Store Info -->
+                <div class="flex items-center space-x-3">
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ $store['store_name'] }}</h1>
+                        <p class="text-gray-600 text-sm md:text-base">Painel Administrativo</p>
+                    </div>
                 </div>
-            <!---logo upload--->
-            <div class="flex items-center space-x-4 m-2 mb-3">
-                <form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
-                    <label for="logo-upload" class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
-                        <i class="fas fa-upload mr-1"></i>
-                        Adicionar Logo à loja
-            </label>
-            <input type="file" id="logo-upload" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
-            </form>
-            @if (!empty($store['logo']))
-            <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 rounded shadow">
-            @endif
-        </div>
-        
-                <div class="flex items-center space-x-4">
-                    <a href="/{{ $store['store_slug'] }}" 
-                       target="_blank"
-                       class="text-blue-600 hover:text-blue-800">
+                <!-- Logo upload & Actions -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
+                        <label for="logo-upload" class="bg-blue-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-blue-700 text-sm flex items-center">
+                            <i class="fas fa-upload mr-1"></i>
+                            <span>Atualizar Logo</span>
+                        </label>
+                        <input type="file" id="logo-upload" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
+                    </form>
+                    @if (!empty($store['logo']))
+                        <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 w-10 rounded img-fluid shadow">
+                    @endif
+                    <a href="/{{ $store['store_slug'] }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
                         <i class="fas fa-external-link-alt mr-1"></i>
-                        Ver Cardápio
+                        <span>Ver Cardápio</span>
                     </a>
-                    <a href="/admin/logout" class="text-red-600 hover:text-red-800">
+                    <a href="/admin/logout" class="text-red-600 hover:text-red-800 text-sm flex items-center">
                         <i class="fas fa-sign-out-alt mr-1"></i>
-                        Sair
+                        <span>Sair</span>
                     </a>
                 </div>
+                <!-- Botão do menu mobile à direita -->
+                <button id="menu-toggle" class="md:hidden text-gray-700 focus:outline-none ml-2">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
             </div>
         </div>
+        <!-- Offcanvas Mobile Menu (Direita) -->
+        <div id="offcanvas-menu" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden">
+            <div class="fixed right-0 top-0 h-full w-64 bg-white shadow-lg p-6 flex flex-col space-y-6">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="font-bold text-lg">{{ $store['store_name'] }}</span>
+                    <button id="menu-close" class="text-gray-700 focus:outline-none">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
+                    <label for="logo-upload-mobile" class="bg-blue-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-blue-700 text-sm flex items-center">
+                        <i class="fas fa-upload mr-1"></i>
+                        <span>Atualizar Logo</span>
+                    </label>
+                    <input type="file" id="logo-upload-mobile" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
+                </form>
+                @if (!empty($store['logo']))
+                    <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 w-10 rounded img-fluid shadow">
+                @endif
+                <a href="/{{ $store['store_slug'] }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                    <i class="fas fa-external-link-alt mr-1"></i>
+                    <span>Ver Cardápio</span>
+                </a>
+                <a href="/admin/logout" class="text-red-600 hover:text-red-800 text-sm flex items-center">
+                    <i class="fas fa-sign-out-alt mr-1"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
+        </div>
+        <script>
+            const menuToggle = document.getElementById('menu-toggle');
+            const offcanvasMenu = document.getElementById('offcanvas-menu');
+            const menuClose = document.getElementById('menu-close');
+            menuToggle?.addEventListener('click', () => {
+                offcanvasMenu.classList.remove('hidden');
+            });
+            menuClose?.addEventListener('click', () => {
+                offcanvasMenu.classList.add('hidden');
+            });
+            offcanvasMenu?.addEventListener('click', (e) => {
+                if (e.target === offcanvasMenu) offcanvasMenu.classList.add('hidden');
+            });
+        </script>
     </header>
 
     <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -194,6 +239,12 @@
                                     @if (!empty($order['notes']))
                                         <div class="mt-1 text-xs text-yellow-700 bg-yellow-50 rounded p-2">Obs: {{ $order['notes'] }}</div>
                                     @endif
+                                </div>
+                                <!-- Botão Imprimir -->
+                                <div class="mt-3 md:mt-0 md:ml-4 flex-shrink-0 flex items-center">
+                                    <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded flex items-center gap-2 print-btn" data-order-id="{{ $order['id'] }}">
+                                        <i class="fas fa-print"></i> Imprimir
+                                    </button>
                                 </div>
                             </div>
                         @endforeach

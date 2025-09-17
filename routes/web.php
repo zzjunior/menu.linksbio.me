@@ -6,6 +6,7 @@ use App\Controllers\MenuController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\CartController;
+use App\Controllers\OrderContoller;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Ingredient;
@@ -181,6 +182,7 @@ $app->group('/{store}', function ($group) {
     $group->post('/carrinho/adicionar', [CartController::class, 'addItem']);
     $group->get('/carrinho/remover/{cart_id}', [CartController::class, 'removeItem']);
     $group->post('/carrinho/sync', [CartController::class, 'syncCart']);
+    $group->get('/api/last-order-by-phone', [OrderContoller::class, 'getLastOrderByPhone']);
     
     // Checkout
     $group->get('/checkout', [CartController::class, 'checkout']);

@@ -16,6 +16,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script>
+// Atualiza o número de itens no carrinho no ícone
+function updateCartCount() {
+    try {
+        const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
+        document.getElementById('cart-count').textContent = cart.length;
+    } catch (e) {
+        document.getElementById('cart-count').textContent = 0;
+    }
+}
+
+// Atualiza o carrinho ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    updateCartCount();
+});
         tailwind.config = {
             theme: {
                 extend: {
@@ -188,10 +202,10 @@
                     <span class="font-medium">Total:</span>
                     <span class="text-xl font-bold text-primary" id="totalPrice">R$ 0,00</span>
                 </div>
-                <button onclick="addCustomizedToCart()" 
-                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
-                     Finalizar <i class="fa-solid fa-arrow-right"></i>
-                </button>
+                <button type="button" onclick="addCustomizedToCart()" 
+                class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
+                Finalizar <i class="fa-solid fa-arrow-right"></i>
+            </button>
             </div>
         </div>
     </div>
@@ -442,8 +456,11 @@ function addCustomizedToCart() {
     }
     localStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
     updateCartCount();
+    // Fecha o modal e redireciona após garantir atualização
     closeCustomizeModal();
-    showToast('Produtos adicionados ao carrinho!');
+    setTimeout(function() {
+        window.location.href = '/{{ $store_slug }}/carrinho';
+    }, 100);
 }
 </script>
 </body>
