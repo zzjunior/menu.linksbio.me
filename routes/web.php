@@ -6,7 +6,7 @@ use App\Controllers\MenuController;
 use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\CartController;
-use App\Controllers\OrderContoller;
+use App\Controllers\OrderController;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\Ingredient;
@@ -182,7 +182,7 @@ $app->group('/{store}', function ($group) {
     $group->post('/carrinho/adicionar', [CartController::class, 'addItem']);
     $group->get('/carrinho/remover/{cart_id}', [CartController::class, 'removeItem']);
     $group->post('/carrinho/sync', [CartController::class, 'syncCart']);
-    $group->get('/api/last-order-by-phone', [OrderContoller::class, 'getLastOrderByPhone']);
+    $group->get('/api/last-order-by-phone', [OrderController::class, 'getLastOrderByPhone']);
     
     // Checkout
     $group->get('/checkout', [CartController::class, 'checkout']);
@@ -192,8 +192,8 @@ $app->group('/{store}', function ($group) {
 
 //** === ROTA PRINTPEDIDO
 $app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
-$app->get('/admin/print-order/{id}', [PrintController::class, 'printOrder']);
-
+$app->get('/admin/print-order/{id}', [PrintController::class, 'printDataJson']);
+$app->get('/api/last-order-id', [OrderController::class, 'getLastOrderId']); /**/
 // === LOGS
 //$app->get('/admin/logs', function ($request, $response) {
     //$log = file_get_contents(__DIR__ . '/../storage/logs/app.log');
