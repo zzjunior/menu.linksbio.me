@@ -11,6 +11,7 @@ use App\Models\Ingredient;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Models\Customer;
 use App\Services\TemplateService;
 
 class CartController
@@ -43,6 +44,7 @@ class CartController
     private Order $orderModel;
     private OrderItem $orderItemModel;
     private User $userModel;
+    private Customer $customerModel;
     private TemplateService $templateService;
     private \PDO $pdo;
 
@@ -52,6 +54,7 @@ class CartController
         Order $orderModel,
         OrderItem $orderItemModel,
         User $userModel,
+        Customer $customerModel,
         TemplateService $templateService,
         \PDO $pdo
     ) {
@@ -60,6 +63,7 @@ class CartController
         $this->orderModel = $orderModel;
         $this->orderItemModel = $orderItemModel;
         $this->userModel = $userModel;
+        $this->customerModel = $customerModel;
         $this->templateService = $templateService;
         $this->pdo = $pdo;
     }
@@ -307,16 +311,27 @@ public function processOrder(Request $request, Response $response, array $args):
     }
 
     try {
-        // Salvar pedido na tabela orders
-        $orderId = $this->orderModel->create([
+        // Preparar dados do cliente
+        $customerData = [
+            'name' => $customerName,
+            'phone' => $customerPhone,
+            'address' => $customerAddress
+        ];
+        
+        // Preparar dados do pedido
+        $orderData = [
             'user_id' => $store['id'],
             'customer_name' => $customerName,
             'customer_phone' => $customerPhone,
             'customer_address' => $customerAddress,
             'notes' => $notes,
             'total_amount' => $total,
+            'status' => 'pendente',
             'created_at' => date('Y-m-d H:i:s')
-        ]);
+        ];
+
+        // Criar pedido com cliente associado
+        $orderId = $this->orderModel->createWithCustomer($orderData, $customerData);
 
         // Salvar itens do pedido
         foreach ($cart as $item) {

@@ -7,16 +7,19 @@ namespace App\Controllers;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Models\User;
+use App\Models\Store;
 use App\Services\TemplateService;
 
 class AuthController
 {
     private User $userModel;
+    private Store $storeModel;
     private TemplateService $templateService;
 
-    public function __construct(User $userModel, TemplateService $templateService)
+    public function __construct(User $userModel, Store $storeModel, TemplateService $templateService)
     {
         $this->userModel = $userModel;
+        $this->storeModel = $storeModel;
         $this->templateService = $templateService;
     }
 
@@ -139,10 +142,19 @@ class AuthController
         ];
 
         try {
+            // Criar usuário
             $userId = $this->userModel->create($userData);
+            
+            // Criar store para o usuário com os mesmos dados
+            $storeId = $this->storeModel->createFromUser($userData);
+            
+            // Associar usuário à store criada
+            $this->userModel->updateById($userId, ['store_id' => $storeId]);
+            
             $_SESSION['success'] = 'Conta criada com sucesso! Faça login para continuar.';
             return $response->withHeader('Location', '/admin/login')->withStatus(302);
         } catch (\Exception $e) {
+            error_log('Erro ao criar usuário/loja: ' . $e->getMessage());
             $_SESSION['error'] = 'Erro ao criar conta. Tente novamente.';
             return $response->withHeader('Location', '/admin/register')->withStatus(302);
         }

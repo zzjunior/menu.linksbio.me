@@ -5,16 +5,69 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 	use App\Models\Order;
+	use App\Services\TemplateService;
 	use Psr\Http\Message\ResponseInterface as Response;
 	use Psr\Http\Message\ServerRequestInterface as Request;
 
 	class OrderController
 	{
 		protected $orderModel;
+		protected $templateService;
 
-		public function __construct(Order $orderModel)
+		public function __construct(Order $orderModel, TemplateService $templateService = null)
 		{
 			$this->orderModel = $orderModel;
+			$this->templateService = $templateService;
+		}
+
+		/**
+		 * Lista todos os pedidos com paginação
+		 */
+		public function listOrders(Request $request, Response $response, array $args): Response
+		{
+			$queryParams = $request->getQueryParams();
+			$page = (int)($queryParams['page'] ?? 1);
+			$perPage = 20;
+			$search = $queryParams['search'] ?? '';
+			$status = $queryParams['status'] ?? '';
+			
+			$orders = $this->orderModel->getAllOrdersPaginated($page, $perPage, $search, $status);
+			$totalOrders = $this->orderModel->getTotalOrdersCount($search, $status);
+			$totalPages = ceil($totalOrders / $perPage);
+			
+			$data = [
+				'orders' => $orders,
+				'currentPage' => $page,
+				'totalPages' => $totalPages,
+				'totalOrders' => $totalOrders,
+				'search' => $search,
+				'status' => $status,
+				'perPage' => $perPage
+			];
+
+			$html = $this->templateService->render('admin.pedidos.list', $data);
+			$response->getBody()->write($html);
+			return $response;
+		}
+
+		/**
+		 * Exibe detalhes completos de um pedido
+		 */
+		public function viewOrder(Request $request, Response $response, array $args): Response
+		{
+			$orderId = (int)$args['id'];
+			$order = $this->orderModel->getOrderWithItems($orderId);
+			
+			if (!$order) {
+				$response->getBody()->write('Pedido não encontrado');
+				return $response->withStatus(404);
+			}
+
+			$data = ['order' => $order];
+
+			$html = $this->templateService->render('admin.pedidos.view', $data);
+			$response->getBody()->write($html);
+			return $response;
 		}
 
 		/**
@@ -23,8 +76,8 @@ namespace App\Controllers;
 		public function getLastOrderId(Request $request, Response $response, $args = [])
 		{
 			$pdo = $this->orderModel->getConnection();
-			$stmt = $pdo->query("SELECT MAX(id) as last_order_id FROM orders");
-			$row = $stmt->fetch(\PDO::FETCH_ASSOC);
+			$result = $pdo->executeQuery("SELECT MAX(id) as last_order_id FROM orders");
+			$row = $result->fetchAssociative();
 			$response->getBody()->write(json_encode(['last_order_id' => (int)($row['last_order_id'] ?? 0)]));
 			return $response->withHeader('Content-Type', 'application/json');
 		}
@@ -34,8 +87,8 @@ namespace App\Controllers;
 			$phone = $request->getQueryParams()['phone'] ?? '';
 			$pdo = $this->orderModel->getConnection();
 			$stmt = $pdo->prepare("SELECT customer_name, customer_address, notes FROM orders WHERE customer_phone = ? ORDER BY id DESC LIMIT 1");
-			$stmt->execute([$phone]);
-			$row = $stmt->fetch(\PDO::FETCH_ASSOC);
+			$result = $stmt->executeQuery([$phone]);
+			$row = $result->fetchAssociative();
 			$response->getBody()->write(json_encode($row ?: []));
 			return $response->withHeader('Content-Type', 'application/json');
 		}

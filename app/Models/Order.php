@@ -16,6 +16,47 @@ class Order extends BaseModel
         return $this->insert('orders', $data);
     }
 
+    /**
+     * Criar pedido com cliente associado
+     */
+    public function createWithCustomer($orderData, $customerData)
+    {
+        // Primeiro, criar ou atualizar o cliente
+        $customerModel = new \App\Models\Customer($this->db);
+        $customerId = $customerModel->createOrUpdate($customerData);
+        
+        // Adicionar customer_id aos dados do pedido
+        $orderData['customer_id'] = $customerId;
+        
+        // Criar o pedido
+        $orderId = $this->insert('orders', $orderData);
+        
+        // Atualizar estatísticas do cliente
+        $customerModel->updateOrderStats($customerId, $orderData['total_amount']);
+        
+        return $orderId;
+    }
+
+    /**
+     * Buscar pedido com dados do cliente
+     */
+    public function getOrderWithCustomer($orderId)
+    {
+        $sql = "
+            SELECT o.*, c.name as customer_name, c.phone as customer_phone, 
+                   c.email as customer_email, c.address as customer_address,
+                   c.total_orders as customer_total_orders, c.total_spent as customer_total_spent,
+                   c.loyalty_points as customer_loyalty_points
+            FROM orders o
+            LEFT JOIN customers c ON o.customer_id = c.id
+            WHERE o.id = ?
+        ";
+        
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$orderId]);
+        return $result->fetchAssociative();
+    }
+
     public function getByUserId($userId)
     {
         return $this->findBy('orders', ['user_id' => $userId], 'created_at DESC');
@@ -33,8 +74,20 @@ class Order extends BaseModel
 
     public function getOrderWithItems($orderId)
     {
-        // Busca o pedido
-        $order = $this->getById($orderId);
+        // Busca o pedido com dados do cliente
+        $sql = "
+            SELECT o.*, c.name as customer_name, c.phone as customer_phone, 
+                   c.email as customer_email, c.address as customer_address,
+                   c.total_orders as customer_total_orders, c.total_spent as customer_total_spent,
+                   c.loyalty_points as customer_loyalty_points
+            FROM orders o
+            LEFT JOIN customers c ON o.customer_id = c.id
+            WHERE o.id = ?
+        ";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$orderId]);
+        $order = $result->fetchAssociative();
+        
         if (!$order) {
             return null;
         }
@@ -117,6 +170,72 @@ class Order extends BaseModel
         $message .= "🕒 *Pedido realizado em:* " . date('d/m/Y H:i', strtotime($order['created_at']));
         
         return $message;
+    }
+
+    /**
+     * Lista pedidos com paginação e filtros
+     */
+    public function getAllOrdersPaginated($page = 1, $perPage = 20, $search = '', $status = '')
+    {
+        $offset = ($page - 1) * $perPage;
+        
+        $sql = "
+            SELECT o.*, 
+                   COUNT(oi.id) as items_count
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE 1=1
+        ";
+        
+        $params = [];
+        
+        // Filtro de busca
+        if (!empty($search)) {
+            $sql .= " AND (o.customer_name LIKE ? OR o.customer_phone LIKE ? OR o.id = ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = $search;
+        }
+        
+        // Filtro de status
+        if (!empty($status)) {
+            $sql .= " AND o.status = ?";
+            $params[] = $status;
+        }
+        
+        $sql .= " GROUP BY o.id ORDER BY o.created_at DESC LIMIT {$perPage} OFFSET {$offset}";
+        
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery($params);
+        return $result->fetchAllAssociative();
+    }
+
+    /**
+     * Conta total de pedidos com filtros
+     */
+    public function getTotalOrdersCount($search = '', $status = '')
+    {
+        $sql = "SELECT COUNT(DISTINCT o.id) as total FROM orders o WHERE 1=1";
+        $params = [];
+        
+        // Filtro de busca
+        if (!empty($search)) {
+            $sql .= " AND (o.customer_name LIKE ? OR o.customer_phone LIKE ? OR o.id = ?)";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = $search;
+        }
+        
+        // Filtro de status
+        if (!empty($status)) {
+            $sql .= " AND o.status = ?";
+            $params[] = $status;
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery($params);
+        $row = $result->fetchAssociative();
+        return (int)$row['total'];
     }
         
 }

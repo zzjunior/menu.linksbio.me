@@ -684,4 +684,173 @@ class AdminController
         }
     }
 
+    // === PEDIDOS ===
+
+    /**
+     * Atualizar status do pedido
+     */
+    public function updateOrderStatus(Request $request, Response $response, array $args): Response
+    {
+        $orderId = (int) $args['id'];
+        $data = $request->getParsedBody();
+        $newStatus = $data['status'] ?? '';
+        
+        $order = $this->orderModel->getById($orderId);
+        if (!$order || $order['user_id'] !== $_SESSION['user_id']) {
+            return $response->withStatus(404);
+        }
+
+        $validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
+        if (!in_array($newStatus, $validStatuses)) {
+            return $response->withStatus(400);
+        }
+
+        $this->orderModel->updateStatus($orderId, $newStatus);
+        
+        return $response->withHeader('Location', '/admin/pedidos')->withStatus(302);
+    }
+
+    /**
+     * Formulário para criar pedido de mesa
+     */
+    public function newTableOrder(Request $request, Response $response): Response
+    {
+        $userId = $_SESSION['user_id'];
+        $products = $this->productModel->getAll($userId);
+        $categories = $this->categoryModel->getAll($userId);
+        $ingredients = $this->ingredientModel->getAll($userId);
+
+        // Agrupar ingredientes por tipo
+        $ingredientsByType = [];
+        foreach ($ingredients as $ingredient) {
+            $ingredientsByType[$ingredient['type']][] = $ingredient;
+        }
+
+        $data = [
+            'pageTitle' => 'Novo Pedido de Mesa',
+            'products' => $products,
+            'categories' => $categories,
+            'ingredients' => $ingredientsByType
+        ];
+
+        return $this->templateService->renderResponse($response, 'admin/orders/table-form', $data);
+    }
+
+    /**
+     * Criar pedido de mesa
+     */
+    public function createTableOrder(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+        $userId = $_SESSION['user_id'];
+        
+        try {
+            // Validar dados obrigatórios
+            $required = ['table_number', 'customer_name', 'items'];
+            foreach ($required as $field) {
+                if (empty($data[$field])) {
+                    $_SESSION['error'] = 'Todos os campos obrigatórios devem ser preenchidos';
+                    return $response->withHeader('Location', '/admin/pedidos/novo')->withStatus(302);
+                }
+            }
+
+            $items = json_decode($data['items'], true);
+            if (empty($items)) {
+                $_SESSION['error'] = 'Adicione pelo menos um item ao pedido';
+                return $response->withHeader('Location', '/admin/pedidos/novo')->withStatus(302);
+            }
+
+            // Calcular total
+            $totalAmount = 0;
+            foreach ($items as $item) {
+                $product = $this->productModel->getById($item['product_id']);
+                if ($product && $product['user_id'] == $userId) {
+                    $itemTotal = $product['price'] * $item['quantity'];
+                    
+                    // Adicionar preço dos ingredientes extras
+                    if (!empty($item['ingredients'])) {
+                        foreach ($item['ingredients'] as $ingredientId => $quantity) {
+                            $ingredient = $this->ingredientModel->getById($ingredientId);
+                            if ($ingredient && $ingredient['user_id'] == $userId) {
+                                $itemTotal += ($ingredient['additional_price'] ?? 0) * $quantity;
+                            }
+                        }
+                    }
+                    
+                    $totalAmount += $itemTotal;
+                }
+            }
+
+            // Criar pedido
+            $orderData = [
+                'user_id' => $userId,
+                'customer_phone' => $data['customer_phone'] ?? '',
+                'customer_name' => $data['customer_name'],
+                'customer_address' => $data['customer_address'] ?? '',
+                'table_number' => $data['table_number'],
+                'total_amount' => $totalAmount,
+                'status' => 'pendente',
+                'order_type' => 'mesa',
+                'notes' => $data['notes'] ?? '',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $orderId = $this->orderModel->create($orderData);
+
+            // Criar itens do pedido
+            foreach ($items as $item) {
+                $product = $this->productModel->getById($item['product_id']);
+                if ($product && $product['user_id'] == $userId) {
+                    $itemData = [
+                        'order_id' => $orderId,
+                        'product_id' => $item['product_id'],
+                        'quantity' => $item['quantity'],
+                        'unit_price' => $product['price'],
+                        'notes' => $item['notes'] ?? ''
+                    ];
+                    
+                    $orderItemId = $this->insert('order_items', $itemData);
+                    
+                    // Adicionar ingredientes se houver
+                    if (!empty($item['ingredients']) && $orderItemId) {
+                        foreach ($item['ingredients'] as $ingredientId => $quantity) {
+                            $ingredient = $this->ingredientModel->getById($ingredientId);
+                            if ($ingredient && $ingredient['user_id'] == $userId && $quantity > 0) {
+                                $this->insert('order_item_ingredients', [
+                                    'order_item_id' => $orderItemId,
+                                    'ingredient_id' => $ingredientId,
+                                    'quantity' => $quantity,
+                                    'price' => $ingredient['additional_price'] ?? 0
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            $_SESSION['success'] = 'Pedido de mesa criado com sucesso!';
+            return $response->withHeader('Location', '/admin/pedidos/' . $orderId)->withStatus(302);
+
+        } catch (\Exception $e) {
+            error_log('Erro ao criar pedido de mesa: ' . $e->getMessage());
+            $_SESSION['error'] = 'Erro ao criar pedido. Tente novamente.';
+            return $response->withHeader('Location', '/admin/pedidos/novo')->withStatus(302);
+        }
+    }
+
+    /**
+     * Helper para inserir dados nas tabelas
+     */
+    private function insert(string $table, array $data): int
+    {
+        $fields = array_keys($data);
+        $placeholders = array_fill(0, count($fields), '?');
+        
+        $sql = "INSERT INTO {$table} (" . implode(', ', $fields) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        $stmt = $this->orderModel->getConnection()->prepare($sql);
+        $stmt->executeStatement(array_values($data));
+        
+        return (int)$this->orderModel->getConnection()->lastInsertId();
+    }
+
 }

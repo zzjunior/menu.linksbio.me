@@ -66,11 +66,56 @@ class User extends BaseModel
 
     public function getStoreBySlug(string $slug): ?array
     {
-        $sql = "SELECT id, store_name, store_description, address, whatsapp, logo FROM users WHERE store_slug = ? AND is_active = 1 LIMIT 1";
+        $sql = "SELECT 
+                    u.id,
+                    u.name,
+                    u.email,
+                    u.store_name,
+                    u.store_slug,
+                    u.whatsapp,
+                    u.address,
+                    u.logo,
+                    u.is_active,
+                    s.id as store_id,
+                    s.store_name as store_store_name,
+                    s.store_description,
+                    s.store_address,
+                    s.store_phone,
+                    s.store_email,
+                    s.store_logo,
+                    s.delivery_fee,
+                    s.loyalty_enabled,
+                    s.loyalty_orders_required,
+                    s.loyalty_discount_percent
+                FROM users u
+                LEFT JOIN stores s ON u.store_id = s.id
+                WHERE u.store_slug = ? AND u.is_active = 1 
+                LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $result = $stmt->executeQuery([$slug]);
-        $store = $result->fetchAssociative();
-        return $store ?: null;
+        $data = $result->fetchAssociative();
+        
+        if (!$data) {
+            return null;
+        }
+        
+        // Retornar dados combinados com fallbacks
+        return [
+            'id' => $data['id'], // user_id para produtos/categorias
+            'user_id' => $data['id'],
+            'store_id' => $data['store_id'],
+            'store_name' => $data['store_store_name'] ?? $data['store_name'],
+            'store_description' => $data['store_description'] ?? '',
+            'store_address' => $data['store_address'] ?? $data['address'],
+            'store_phone' => $data['store_phone'] ?? $data['whatsapp'],
+            'store_email' => $data['store_email'] ?? $data['email'],
+            'store_logo' => $data['store_logo'] ?? $data['logo'],
+            'delivery_fee' => $data['delivery_fee'] ?? 0.00,
+            'loyalty_enabled' => $data['loyalty_enabled'] ?? 0,
+            'loyalty_orders_required' => $data['loyalty_orders_required'] ?? 10,
+            'loyalty_discount_percent' => $data['loyalty_discount_percent'] ?? 10.00,
+            'store_slug' => $data['store_slug']
+        ];
     }
 
     public function isActive($userId)

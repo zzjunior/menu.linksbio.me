@@ -6,7 +6,7 @@
     <title>{{ $pageTitle }}</title>
     <link rel="stylesheet" href="/assets/css/custom.css">
     <link rel="stylesheet" href="/assets/css/ifood-modal.css">
-    <link rel="icon" type="image/x-icon" href="{{ $store['logo'] ?? '/assets/favicon.ico' }}">
+    <link rel="icon" type="image/x-icon" href="{{ $store['store_logo'] ?? '/assets/favicon.ico' }}">
     <meta name="theme-color" content="#8B5CF6">
     <meta name="description" content="{{ $store['store_description'] ?? 'Cardápio digital da sua loja' }}">
     <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
@@ -49,22 +49,22 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
-                @if (!empty($store['logo']))
-                    <img src="{{ $store['logo'] }}" alt="Logo da loja"
+                @if (!empty($store['store_logo']))
+                    <img src="{{ $store['store_logo'] }}" alt="Logo da loja"
                          class="w-16 h-16 rounded-full object-cover border-2 border-primary flex-shrink-0">
                 @endif
                 <div class="flex-1 min-w-0">
                     <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">{{ $store['store_name'] }}</h1>
-                    @if (!empty($store['address']))
-                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($store['address']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
+                    @if (!empty($store['store_address']))
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($store['store_address']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
                             <i class="fas fa-map-marker-alt mr-1"></i>
-                            {{ $store['address'] }}
+                            {{ $store['store_address'] }}
                         </a>
                     @endif
-                    @if (!empty($store['whatsapp']))
-                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $store['whatsapp']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
+                    @if (!empty($store['store_phone']))
+                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $store['store_phone']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
                             <i class="fab fa-whatsapp mr-1"></i>
-                            {{ $store['whatsapp'] }}
+                            {{ $store['store_phone'] }}
                         </a>
                     @endif
                 </div>

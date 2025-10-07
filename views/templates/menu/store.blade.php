@@ -30,26 +30,38 @@
     </script>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-xl font-bold text-gray-800">{{ $store['store_name'] }}</h1>
-                    @if ($store['address'])
-                        <p class="text-sm text-gray-600">
+    {{-- Header --}}
+<header id="mainHeader" class="bg-white shadow-lg sticky top-0 z-50 transition-transform duration-300">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                @if (!empty($store['store_logo']))
+                    <img src="{{ $store['store_logo'] }}" alt="Logo da loja"
+                         class="w-16 h-16 rounded-full object-cover border-2 border-primary flex-shrink-0">
+                @endif
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">{{ $store['store_name'] }}</h1>
+                    @if (!empty($store['store_address']))
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($store['store_address']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
                             <i class="fas fa-map-marker-alt mr-1"></i>
-                            {{ $store['address'] }}
-                        </p>
+                            {{ $store['store_address'] }}
+                        </a>
+                    @endif
+                    @if (!empty($store['store_phone']))
+                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $store['store_phone']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
+                            <i class="fab fa-whatsapp mr-1"></i>
+                            {{ $store['store_phone'] }}
+                        </a>
                     @endif
                 </div>
-                <a href="/{{ $store_slug }}/carrinho" class="relative bg-primary text-white p-3 rounded-full hover:bg-secondary transition-colors">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                </a>
             </div>
+            <a href="/{{ $store_slug }}/carrinho" class="relative bg-primary text-white p-2 rounded-full hover:bg-secondary transition-colors flex-shrink-0">
+                <i class="fas fa-shopping-cart p-2" style="font-size: 0.7rem;"></i>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+            </a>
         </div>
-    </header>
+    </div>
+</header>
 
     <!-- Filtros de Categoria -->
     @if (!empty($categories))

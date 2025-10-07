@@ -92,3 +92,4 @@ test.php
 setup_multistore.php
 test_connection.php
 fix_database.php
+test/

@@ -13,10 +13,16 @@ use App\Models\Ingredient;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Customer;
+use App\Models\Report;
+use App\Models\StoreSettings;
+use App\Models\Store;
 use App\Services\TemplateService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Controllers\PrintController;
+use App\Controllers\ReportController;
+use App\Controllers\StoreController;
 
 // Iniciar sessão
 session_start();
@@ -56,6 +62,22 @@ $container->set(OrderItem::class, function ($container) {
     return new OrderItem($container->get('db'));
 });
 
+$container->set(Customer::class, function ($container) {
+    return new Customer($container->get('db'));
+});
+
+$container->set(Report::class, function ($container) {
+    return new Report($container->get('db'));
+});
+
+$container->set(StoreSettings::class, function ($container) {
+    return new StoreSettings($container->get('db'));
+});
+
+$container->set(Store::class, function ($container) {
+    return new Store($container->get('db'));
+});
+
 $container->set(MenuController::class, function ($container) {
     return new MenuController(
         $container->get(Product::class),
@@ -80,6 +102,7 @@ $container->set(AdminController::class, function ($container) {
 $container->set(AuthController::class, function ($container) {
     return new AuthController(
         $container->get(User::class),
+        $container->get(Store::class),
         $container->get(TemplateService::class)
     );
 });
@@ -96,6 +119,7 @@ $container->set(CartController::class, function ($container) {
         $container->get(Order::class),
         $container->get(OrderItem::class),
         $container->get(User::class),
+        $container->get(Customer::class),
         $container->get(TemplateService::class),
         $pdo 
     );
@@ -113,6 +137,32 @@ $container->set(PrintController::class, function ($container) {
         //$container->get('logger') // Adicione o logger aqui!
     );
 });
+
+// Container para OrderController
+$container->set(OrderController::class, function ($container) {
+    return new OrderController(
+        $container->get(Order::class),
+        $container->get(TemplateService::class)
+    );
+});
+
+// Container para ReportController
+$container->set(ReportController::class, function ($container) {
+    return new ReportController(
+        $container->get(Report::class),
+        $container->get(TemplateService::class)
+    );
+});
+
+// Container para StoreController
+$container->set(StoreController::class, function ($container) {
+    return new StoreController(
+        $container->get(StoreSettings::class),
+        $container->get(TemplateService::class)
+    );
+});
+
+
 
 // === ROTAS DE AUTENTICAÇÃO ===
 $app->get('/admin/login', [AuthController::class, 'loginForm']);
@@ -152,10 +202,22 @@ $app->group('/admin', function ($group) {
     $group->post('/ingredients/{id}', [AdminController::class, 'updateIngredient']);
     $group->post('/ingredients/{id}/delete', [AdminController::class, 'deleteIngredient']);
     
-    // Pedidos
-    $group->get('/orders', [AdminController::class, 'listOrders']);
-    $group->get('/orders/{id}', [AdminController::class, 'viewOrder']);
-    $group->post('/orders/{id}/status', [AdminController::class, 'updateOrderStatus']);
+    // Pedidos (OrderController - versão completa)
+    $group->get('/pedidos', [OrderController::class, 'listOrders']);
+    $group->get('/pedidos/novo', [AdminController::class, 'newTableOrder']);
+    $group->post('/pedidos/novo', [AdminController::class, 'createTableOrder']);
+    $group->get('/pedidos/{id}', [OrderController::class, 'viewOrder']);
+    $group->post('/pedidos/{id}/status', [AdminController::class, 'updateOrderStatus']);
+    
+    // Relatórios Financeiros
+    $group->get('/relatorios', [ReportController::class, 'dashboard']);
+    $group->get('/relatorios/diario', [ReportController::class, 'dailyReport']);
+    $group->get('/relatorios/api/chart-data', [ReportController::class, 'getChartData']);
+    
+    // Configurações da Loja
+    $group->get('/loja/configuracoes', [StoreController::class, 'settings']);
+    $group->post('/loja/configuracoes', [StoreController::class, 'updateSettings']);
+    $group->get('/loja/fidelidade/{customerId}', [StoreController::class, 'checkCustomerLoyalty']);
     
 })->add(function ($request, $handler) {
     // Verificar se usuário está logado
@@ -193,6 +255,7 @@ $app->group('/{store}', function ($group) {
 //** === ROTA PRINTPEDIDO
 $app->get('/imprimir-pedido/{id}', [PrintController::class, 'printOrder']);
 $app->get('/admin/print-order/{id}', [PrintController::class, 'printDataJson']);
+$app->get('/admin/print-order-pdf/{id}', [PrintController::class, 'printOrderPDF']);
 $app->get('/api/last-order-id', [OrderController::class, 'getLastOrderId']); /**/
 // === LOGS
 //$app->get('/admin/logs', function ($request, $response) {
