@@ -120,6 +120,7 @@ $container->set(CartController::class, function ($container) {
         $container->get(OrderItem::class),
         $container->get(User::class),
         $container->get(Customer::class),
+        $container->get(StoreSettings::class),
         $container->get(TemplateService::class),
         $pdo 
     );

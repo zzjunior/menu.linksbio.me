@@ -30,6 +30,25 @@
         <div id="cart-summary" class="hidden bg-white rounded-lg shadow-sm border p-4"></div>
     </div>
 <script>
+// Dados dos ingredientes e produtos passados do PHP
+const ingredientsData = @json($ingredients ?? []);
+const productsData = @json($products ?? []);
+
+console.log('Products Data:', productsData); // Debug
+console.log('Ingredients Data:', ingredientsData); // Debug
+
+// Função para buscar dados do ingrediente por ID
+function getIngredientData(ingredientId) {
+    return ingredientsData.find(ingredient => ingredient.id == ingredientId) || null;
+}
+
+// Função para buscar dados do produto por ID
+function getProductData(productId) {
+    const product = productsData.find(product => product.id == productId);
+    console.log('Searching for product:', productId, 'Found:', product); // Debug
+    return product || null;
+}
+
 function renderCart() {
     const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
     const cartItemsDiv = document.getElementById('cart-items');
@@ -55,29 +74,70 @@ function renderCart() {
     }
 
     cart.forEach(item => {
+        console.log('Processing cart item:', item); // Debug
+        
         let itemTotal = item.price * item.quantity;
         let ingredientsHtml = '';
+        let ingredientsTotal = 0;
+        
+        // Busca dados do produto para pegar category_name
+        const productData = getProductData(item.product_id);
+        console.log('Product data found:', productData); // Debug
+        
+        const displayName = productData ? 
+            (productData.category_name ? productData.category_name + ' ' + productData.name : productData.name) : 
+            (item.name || 'Produto');
+            
+        console.log('Display name:', displayName); // Debug
+        
         if (item.ingredients && typeof item.ingredients === 'object') {
             for (const [id, qty] of Object.entries(item.ingredients)) {
-                ingredientsHtml += `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mr-1">
-                    Ingrediente #${id} ${qty > 1 ? '(' + qty + 'x)' : ''}
-                </span>`;
+                const ingredientData = getIngredientData(id);
+                if (ingredientData) {
+                    const ingredientPrice = parseFloat(ingredientData.additional_price || 0);
+                    const ingredientSubtotal = ingredientPrice * qty * item.quantity;
+                    ingredientsTotal += ingredientSubtotal;
+                    
+                    ingredientsHtml += `<div class="flex justify-between items-center text-xs text-gray-600 mt-1">
+                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            • ${ingredientData.name} ${qty > 1 ? '(' + qty + 'x)' : ''}
+                        </span>
+                        ${ingredientPrice > 0 ? `<span class="text-green-600 font-medium">+R$ ${ingredientSubtotal.toFixed(2).replace('.', ',')}</span>` : ''}
+                    </div>`;
+                } else {
+                    ingredientsHtml += `<div class="text-xs text-gray-500 mt-1">
+                        <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                            • Ingrediente #${id} ${qty > 1 ? '(' + qty + 'x)' : ''}
+                        </span>
+                    </div>`;
+                }
             }
         }
+        
+        itemTotal += ingredientsTotal;
         total += itemTotal;
 
         cartItemsDiv.innerHTML += `
-            <div class="bg-white rounded-lg shadow-sm border p-4 mb-4 flex items-center justify-between">
-                <div>
-                    <div class="font-bold text-gray-800">${item.name}</div>
-                    <div class="text-sm text-gray-600">Qtd: ${item.quantity}</div>
-                    <div>${ingredientsHtml}</div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-lg font-semibold text-purple-600">R$ ${(itemTotal).toFixed(2).replace('.', ',')}</span>
-                    <button onclick="removeCartItem('${item.cart_id}')" class="text-red-500 hover:text-red-700">
-                        <i class="fas fa-trash"></i>
-                    </button>
+            <div class="bg-white rounded-lg shadow-sm border p-4 mb-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="font-bold text-gray-800 text-lg">
+                            ${displayName}
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            Quantidade: ${item.quantity}x • Preço unitário: R$ ${item.price.toFixed(2).replace('.', ',')}
+                        </div>
+                        ${ingredientsHtml ? `<div class="space-y-1">${ingredientsHtml}</div>` : ''}
+                        ${item.notes ? `<div class="mt-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded border-l-2 border-yellow-400">
+                            <strong>Observação:</strong> ${item.notes}
+                        </div>` : ''}
+                    </div>
+                    <div class="flex flex-col items-end gap-2 ml-4">
+                        <span class="text-lg font-semibold text-purple-600">R$ ${itemTotal.toFixed(2).replace('.', ',')}</span>
+                        <button onclick="removeCartItem('${item.cart_id}')" class="text-red-500 hover:text-red-700 p-2">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;

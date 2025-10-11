@@ -16,9 +16,9 @@
             if (typeof updateCartCount === 'function') updateCartCount();
         } catch (e) {}
     });
-window.onload = function() {
-    window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/{{ $order['id'] }}";
-};
+//window.onload = function() {
+   // window.location.href = "my.bluetoothprint.scheme://https://menu.linksbio.me/imprimir-pedido/{{ $order['id'] }}";
+//}; // ignora o antigo modelo de impressão
 </script>
 </head>
 <body class="bg-gray-50 min-h-screen">

@@ -12,6 +12,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Customer;
+use App\Models\StoreSettings;
 use App\Services\TemplateService;
 
 class CartController
@@ -45,6 +46,7 @@ class CartController
     private OrderItem $orderItemModel;
     private User $userModel;
     private Customer $customerModel;
+    private StoreSettings $storeSettingsModel;
     private TemplateService $templateService;
     private \PDO $pdo;
 
@@ -55,6 +57,7 @@ class CartController
         OrderItem $orderItemModel,
         User $userModel,
         Customer $customerModel,
+        StoreSettings $storeSettingsModel,
         TemplateService $templateService,
         \PDO $pdo
     ) {
@@ -64,6 +67,7 @@ class CartController
         $this->orderItemModel = $orderItemModel;
         $this->userModel = $userModel;
         $this->customerModel = $customerModel;
+        $this->storeSettingsModel = $storeSettingsModel;
         $this->templateService = $templateService;
         $this->pdo = $pdo;
     }
@@ -123,7 +127,9 @@ class CartController
             'store' => $store,
             'cart_items' => $cartItems,
             'total' => $total,
-            'store_slug' => $storeSlug
+            'store_slug' => $storeSlug,
+            'ingredients' => $this->ingredientModel->getAllByUser($store['id']),
+            'products' => $this->productModel->getAll($store['id'])
         ];
 
         return $this->templateService->renderResponse($response, 'cart/index', $data);
@@ -165,6 +171,8 @@ class CartController
         $cartItem = [
             'cart_id' => uniqid(),
             'product_id' => $productId,
+            'name' => $product['name'],
+            'category_name' => $product['category_name'],
             'quantity' => $quantity,
             'size' => $size,
             'price' => $price,
@@ -216,6 +224,11 @@ class CartController
             return $response->withStatus(404);
         }
 
+        // Buscar configurações da loja para pegar taxa de entrega
+        $_SESSION['user_id'] = $store['id']; // Temporariamente para buscar configurações
+        $storeSettings = $this->storeSettingsModel->getSettings();
+        unset($_SESSION['user_id']); // Limpar depois
+
         $cart = $_SESSION['cart_' . $store['id']] ?? [];
         $cartItems = [];
         $total = 0;
@@ -253,6 +266,7 @@ class CartController
         $data = [
             'title' => 'Checkout - ' . $store['store_name'],
             'store' => $store,
+            'store_settings' => $storeSettings,
             'cart_items' => $cartItems,
             'total' => $total,
             'store_slug' => $storeSlug,
@@ -286,9 +300,17 @@ public function processOrder(Request $request, Response $response, array $args):
     $customerPhone = preg_replace('/[^0-9]/', '', $data['customer_phone'] ?? '');
     $customerAddress = trim($data['customer_address'] ?? '');
     $notes = trim($data['notes'] ?? '');
+    $orderType = $data['order_type'] ?? 'delivery';
+    $paymentMethod = $data['payment_method'] ?? 'pix';
+    $changeFor = !empty($data['change_for']) ? floatval($data['change_for']) : null;
 
-    if (empty($customerName) || empty($customerPhone) || empty($customerAddress)) {
-        $_SESSION['error'] = 'Todos os campos são obrigatórios';
+    if (empty($customerName) || empty($customerPhone)) {
+        $_SESSION['error'] = 'Nome e telefone são obrigatórios';
+        return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
+    }
+
+    if ($orderType === 'delivery' && empty($customerAddress)) {
+        $_SESSION['error'] = 'Endereço é obrigatório para delivery';
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
     }
 
@@ -325,6 +347,9 @@ public function processOrder(Request $request, Response $response, array $args):
             'customer_phone' => $customerPhone,
             'customer_address' => $customerAddress,
             'notes' => $notes,
+            'order_type' => $orderType,
+            'payment_method' => $paymentMethod,
+            'change_for' => $changeFor,
             'total_amount' => $total,
             'status' => 'pendente',
             'created_at' => date('Y-m-d H:i:s')
@@ -355,9 +380,81 @@ public function processOrder(Request $request, Response $response, array $args):
             }
         }
 
-        // Montar mensagem WhatsApp simples
-        $whatsappMessage = "Olá, novo pedido recebido!\nCliente: $customerName\nTelefone: $customerPhone\nEndereço: $customerAddress\nTotal: R$ " . number_format($total, 2, ',', '.') . "\nPedido #$orderId";
-        $whatsappUrl = "https://wa.me/55{$store['whatsapp']}?text=" . urlencode($whatsappMessage);
+        // Buscar configurações da loja para pegar taxa de entrega
+        $_SESSION['user_id'] = $store['id']; // Temporariamente para buscar configurações
+        $storeSettings = $this->storeSettingsModel->getSettings();
+        unset($_SESSION['user_id']); // Limpar depois
+
+        // Montar mensagem WhatsApp detalhada
+        $orderTime = date('H:i');
+        $orderNumber = $orderId;
+        $storeName = $store['store_name'];
+        $estimate = '10 - 30 minutos';
+        //$orderUrl = "https://instadelivery.com.br/order/{$storeSlug}";
+        //$repeatUrl = "https://instadelivery.com.br/querodenovo/" . $orderNumber;
+        $orderTypeText = $orderType === 'delivery' ? 'Delivery' : 'Retirada Balcão';
+        $deliveryFee = $orderType === 'delivery' ? floatval($storeSettings['delivery_fee'] ?? 0.00) : 0.00;
+        $discount = 0.00;
+        
+        // Determinar texto da forma de pagamento
+        $paymentText = match($paymentMethod) {
+            'pix' => 'PIX (chave exibida após o envio)',
+            'money' => 'Dinheiro' . ($changeFor ? " (troco para R\$ " . number_format($changeFor, 2, ',', '.') . ")" : ''),
+            'card' => 'Cartão (débito/crédito)',
+            default => 'A combinar'
+        };
+        
+        $pixKey = $store['pix_key'] ?? '';
+
+        $whatsappMessage = "Pedido {$storeName} ({$orderTime}): {$orderNumber}\n";
+        $whatsappMessage .= "Estimativa: {$estimate}\n\n";
+        $whatsappMessage .= "Acompanhe o pedido👇: {$orderUrl}\n";
+        $whatsappMessage .= "Para repetir o pedido 👇🏻:\n{$repeatUrl}\n";
+        $whatsappMessage .= "Tipo: {$orderTypeText}\n";
+        
+        if ($orderType === 'delivery') {
+            $whatsappMessage .= "Endereço: {$customerAddress}\n";
+        }
+        
+        $whatsappMessage .= "NOME: {$customerName}\n";
+        $whatsappMessage .= "Fone: {$customerPhone}\n";
+        $whatsappMessage .= "------------------------------\n";
+
+        foreach ($cart as $item) {
+            $product = $this->productModel->getById($item['product_id']);
+            $productName = $product ? $product['name'] : 'Produto';
+            $size = $item['size'] ? " - {$item['size']}" : '';
+            $itemPrice = number_format(floatval($item['price']), 2, ',', '.');
+            $whatsappMessage .= "➡ {$item['quantity']}x {$productName}{$size} R\${$itemPrice}\n";
+            // Ingredientes/adicionais
+            if (!empty($item['ingredients'])) {
+            foreach ($item['ingredients'] as $ingredientId => $quantity) {
+                $ingredient = $this->ingredientModel->getById($ingredientId);
+                if ($ingredient) {
+                $ingredientName = $ingredient['name'];
+                $ingredientPrice = number_format(floatval($ingredient['additional_price']), 2, ',', '.');
+                $whatsappMessage .= "   + {$quantity}x {$ingredientName} R\${$ingredientPrice}\n";
+                }
+            }
+            }
+        }
+
+        if (!empty($notes)) {
+            $whatsappMessage .= "OBS: {$notes}\n";
+        }
+
+        $whatsappMessage .= "------------------------------\n";
+        $whatsappMessage .= "Itens: R\$" . number_format($total, 2, ',', '.') . "\n";
+        $whatsappMessage .= "Desconto: R\$" . number_format($discount, 2, ',', '.') . "\n";
+        $whatsappMessage .= "Entrega: R\$" . number_format($deliveryFee, 2, ',', '.') . "\n\n";
+        $whatsappMessage .= "TOTAL: R\$" . number_format($total + $deliveryFee, 2, ',', '.') . "\n";
+        $whatsappMessage .= "------------------------------\n";
+        $whatsappMessage .= "Pagamento: {$paymentText}\n";
+        if ($paymentMethod === 'pix' && $pixKey) {
+            $whatsappMessage .= "Chave PIX: {$pixKey}\n";
+        }
+        $storePhone = preg_replace('/[^0-9]/', '', $store['store_phone']);
+        $whatsappUrl = "https://wa.me/55{$storePhone}?text=" . urlencode($whatsappMessage);
 
         // Limpar carrinho
         unset($_SESSION['cart_' . $store['id']]);
