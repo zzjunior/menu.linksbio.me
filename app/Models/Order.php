@@ -67,6 +67,17 @@ class Order extends BaseModel
         return $this->findById('orders', $id);
     }
 
+    /**
+     * Busca pedido por ID verificando se pertence ao usuário/loja
+     */
+    public function getByIdAndUserId($id, $userId)
+    {
+        $sql = "SELECT * FROM orders WHERE id = ? AND user_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$id, $userId]);
+        return $result->fetchAssociative();
+    }
+
     public function updateStatus($id, $status)
     {
         return $this->update('orders', $id, ['status' => $status]);
@@ -175,7 +186,7 @@ class Order extends BaseModel
     /**
      * Lista pedidos com paginação e filtros
      */
-    public function getAllOrdersPaginated($page = 1, $perPage = 20, $search = '', $status = '')
+    public function getAllOrdersPaginated($page = 1, $perPage = 20, $search = '', $status = '', $userId = null)
     {
         $offset = ($page - 1) * $perPage;
         
@@ -188,6 +199,12 @@ class Order extends BaseModel
         ";
         
         $params = [];
+        
+        // Filtro por loja/usuário
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
         
         // Filtro de busca
         if (!empty($search)) {
@@ -213,10 +230,16 @@ class Order extends BaseModel
     /**
      * Conta total de pedidos com filtros
      */
-    public function getTotalOrdersCount($search = '', $status = '')
+    public function getTotalOrdersCount($search = '', $status = '', $userId = null)
     {
         $sql = "SELECT COUNT(DISTINCT o.id) as total FROM orders o WHERE 1=1";
         $params = [];
+        
+        // Filtro por loja/usuário
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
         
         // Filtro de busca
         if (!empty($search)) {
@@ -235,7 +258,6 @@ class Order extends BaseModel
         $stmt = $this->db->prepare($sql);
         $result = $stmt->executeQuery($params);
         $row = $result->fetchAssociative();
-        return (int)$row['total'];
+        return (int) $row['total'];
     }
-        
 }

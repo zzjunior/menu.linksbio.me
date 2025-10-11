@@ -37,7 +37,7 @@ class Ingredient extends BaseModel
      */
     public function getAllByUser(int $userId): array
     {
-        $sql = "SELECT * FROM ingredients WHERE user_id = ? ORDER BY type, name";
+        $sql = "SELECT * FROM ingredients WHERE user_id = ? AND active = 1 ORDER BY type, name";
         $stmt = $this->db->prepare($sql);
         $result = $stmt->executeQuery([$userId]);
         

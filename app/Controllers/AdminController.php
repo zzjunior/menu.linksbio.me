@@ -647,6 +647,31 @@ class AdminController
     }
 
     /**
+     * Excluir ingrediente
+     */
+    public function deleteIngredient(Request $request, Response $response, array $args): Response
+    {
+        $ingredientId = (int) $args['id'];
+        $ingredient = $this->ingredientModel->getById($ingredientId);
+        
+        if (!$ingredient || $ingredient['user_id'] !== $_SESSION['user_id']) {
+            return $response->withStatus(404);
+        }
+        
+        try {
+            // Fazer soft delete (marcar como inativo)
+            $this->ingredientModel->deleteById($ingredientId);
+            
+            $_SESSION['success'] = 'Ingrediente excluído com sucesso!';
+            return $response->withHeader('Location', '/admin/ingredients')->withStatus(302);
+        } catch (\Exception $e) {
+            error_log('Erro ao excluir ingrediente: ' . $e->getMessage());
+            $_SESSION['error'] = 'Erro ao excluir ingrediente: ' . $e->getMessage();
+            return $response->withHeader('Location', '/admin/ingredients')->withStatus(302);
+        }
+    }
+
+    /**
      * Faz upload do logo da loja
      */
     public function uploadLogo(Request $request, Response $response): Response

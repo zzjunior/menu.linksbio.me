@@ -27,25 +27,26 @@ class ReportController
     {
         $queryParams = $request->getQueryParams();
         $date = $queryParams['date'] ?? date('Y-m-d');
+        $userId = $_SESSION['user_id'];
         
         // Relatório do dia
-        $dailyReport = $this->reportModel->getDailyFinancialReport($date);
+        $dailyReport = $this->reportModel->getDailyFinancialReport($date, $userId);
         
         // Relatório da semana
-        $weeklyReport = $this->reportModel->getWeeklyFinancialReport();
+        $weeklyReport = $this->reportModel->getWeeklyFinancialReport(null, $userId);
         
         // Produtos mais vendidos (últimos 7 dias)
         $startDate = date('Y-m-d', strtotime('-7 days'));
         $endDate = date('Y-m-d');
-        $topProducts = $this->reportModel->getTopProducts($startDate, $endDate, 5);
+        $topProducts = $this->reportModel->getTopProducts($startDate, $endDate, 5, $userId);
         
         // Vendas por hora (últimos 7 dias)
-        $hourlyData = $this->reportModel->getSalesByHour($startDate, $endDate);
+        $hourlyData = $this->reportModel->getSalesByHour($startDate, $endDate, $userId);
         
         // Comparação com período anterior
         $previousStartDate = date('Y-m-d', strtotime('-14 days'));
         $previousEndDate = date('Y-m-d', strtotime('-7 days'));
-        $comparison = $this->reportModel->comparePeriodsReport($startDate, $endDate, $previousStartDate, $previousEndDate);
+        $comparison = $this->reportModel->comparePeriodsReport($startDate, $endDate, $previousStartDate, $previousEndDate, $userId);
         
         $data = [
             'pageTitle' => 'Relatórios Financeiros',
@@ -69,14 +70,15 @@ class ReportController
     {
         $queryParams = $request->getQueryParams();
         $date = $queryParams['date'] ?? date('Y-m-d');
+        $userId = $_SESSION['user_id'];
         
-        $report = $this->reportModel->getDailyFinancialReport($date);
-        $topProducts = $this->reportModel->getTopProducts($date, $date, 10);
-        $hourlyData = $this->reportModel->getSalesByHour($date, $date);
+        $report = $this->reportModel->getDailyFinancialReport($date, $userId);
+        $topProducts = $this->reportModel->getTopProducts($date, $date, 10, $userId);
+        $hourlyData = $this->reportModel->getSalesByHour($date, $date, $userId);
         
         // Comparação com dia anterior
         $previousDate = date('Y-m-d', strtotime($date . ' -1 day'));
-        $comparison = $this->reportModel->comparePeriodsReport($date, $date, $previousDate, $previousDate);
+        $comparison = $this->reportModel->comparePeriodsReport($date, $date, $previousDate, $previousDate, $userId);
         
         $data = [
             'pageTitle' => 'Relatório Diário - ' . date('d/m/Y', strtotime($date)),
@@ -101,19 +103,20 @@ class ReportController
         $type = $queryParams['type'] ?? 'daily';
         $startDate = $queryParams['start_date'] ?? date('Y-m-d', strtotime('-7 days'));
         $endDate = $queryParams['end_date'] ?? date('Y-m-d');
+        $userId = $_SESSION['user_id'];
         
         $data = [];
         
         switch ($type) {
             case 'weekly':
-                $data = $this->reportModel->getWeeklyFinancialReport($startDate);
+                $data = $this->reportModel->getWeeklyFinancialReport($startDate, $userId);
                 break;
             case 'hourly':
-                $data = $this->reportModel->getSalesByHour($startDate, $endDate);
+                $data = $this->reportModel->getSalesByHour($startDate, $endDate, $userId);
                 break;
             case 'daily':
             default:
-                $data = [$this->reportModel->getDailyFinancialReport($startDate)];
+                $data = [$this->reportModel->getDailyFinancialReport($startDate, $userId)];
                 break;
         }
         

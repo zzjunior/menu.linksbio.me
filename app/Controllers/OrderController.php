@@ -31,8 +31,14 @@ namespace App\Controllers;
 			$search = $queryParams['search'] ?? '';
 			$status = $queryParams['status'] ?? '';
 			
-			$orders = $this->orderModel->getAllOrdersPaginated($page, $perPage, $search, $status);
-			$totalOrders = $this->orderModel->getTotalOrdersCount($search, $status);
+			// Filtrar apenas pedidos da loja atual
+			$userId = $_SESSION['user_id'] ?? null;
+			if (!$userId) {
+				return $response->withHeader('Location', '/admin/login')->withStatus(302);
+			}
+			
+			$orders = $this->orderModel->getAllOrdersPaginated($page, $perPage, $search, $status, $userId);
+			$totalOrders = $this->orderModel->getTotalOrdersCount($search, $status, $userId);
 			$totalPages = ceil($totalOrders / $perPage);
 			
 			$data = [

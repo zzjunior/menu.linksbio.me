@@ -7,7 +7,7 @@ class Report extends BaseModel
     /**
      * Relatório financeiro diário
      */
-    public function getDailyFinancialReport($date = null)
+    public function getDailyFinancialReport($date = null, $userId = null)
     {
         if (!$date) {
             $date = date('Y-m-d');
@@ -25,12 +25,19 @@ class Report extends BaseModel
                 SUM(CASE WHEN o.status = 'pending' THEN o.total_amount ELSE 0 END) as pending_revenue,
                 SUM(CASE WHEN o.status = 'cancelled' THEN o.total_amount ELSE 0 END) as cancelled_revenue
             FROM orders o
-            WHERE DATE(o.created_at) = ?
-            GROUP BY DATE(o.created_at)
-        ";
+            WHERE DATE(o.created_at) = ?";
+        
+        $params = [$date];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
+        
+        $sql .= " GROUP BY DATE(o.created_at)";
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$date]);
+        $result = $stmt->executeQuery($params);
         $report = $result->fetchAssociative();
         
         if (!$report) {
@@ -53,7 +60,7 @@ class Report extends BaseModel
     /**
      * Relatório financeiro semanal
      */
-    public function getWeeklyFinancialReport($startDate = null)
+    public function getWeeklyFinancialReport($startDate = null, $userId = null)
     {
         if (!$startDate) {
             $startDate = date('Y-m-d', strtotime('monday this week'));
@@ -70,20 +77,27 @@ class Report extends BaseModel
                 AVG(o.total_amount) as avg_order_value
             FROM orders o
             WHERE DATE(o.created_at) BETWEEN ? AND ?
-                AND o.status != 'cancelled'
-            GROUP BY DATE(o.created_at)
-            ORDER BY DATE(o.created_at)
-        ";
+                AND o.status != 'cancelled'";
+        
+        $params = [$startDate, $endDate];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
+        
+        $sql .= " GROUP BY DATE(o.created_at)
+            ORDER BY DATE(o.created_at)";
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$startDate, $endDate]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAllAssociative();
     }
 
     /**
      * Relatório financeiro mensal  
      */
-    public function getMonthlyFinancialReport($year = null, $month = null)
+    public function getMonthlyFinancialReport($year = null, $month = null, $userId = null)
     {
         if (!$year) $year = date('Y');
         if (!$month) $month = date('m');
@@ -99,20 +113,27 @@ class Report extends BaseModel
             FROM orders o
             WHERE YEAR(o.created_at) = ? 
                 AND MONTH(o.created_at) = ?
-                AND o.status != 'cancelled'
-            GROUP BY DATE(o.created_at)
-            ORDER BY DATE(o.created_at)
-        ";
+                AND o.status != 'cancelled'";
+        
+        $params = [$year, $month];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
+        
+        $sql .= " GROUP BY DATE(o.created_at)
+            ORDER BY DATE(o.created_at)";
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$year, $month]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAllAssociative();
     }
 
     /**
      * Relatório de produtos mais vendidos em um período
      */
-    public function getTopProducts($startDate, $endDate, $limit = 10)
+    public function getTopProducts($startDate, $endDate, $limit = 10, $userId = null)
     {
         $sql = "
             SELECT 
@@ -126,21 +147,28 @@ class Report extends BaseModel
             JOIN orders o ON oi.order_id = o.id
             JOIN products p ON oi.product_id = p.id
             WHERE DATE(o.created_at) BETWEEN ? AND ?
-                AND o.status != 'cancelled'
-            GROUP BY p.id, p.name, p.image
+                AND o.status != 'cancelled'";
+        
+        $params = [$startDate, $endDate];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
+        
+        $sql .= " GROUP BY p.id, p.name, p.image
             ORDER BY total_revenue DESC
-            LIMIT " . (int)$limit . "
-        ";
+            LIMIT " . (int)$limit;
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$startDate, $endDate]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAllAssociative();
     }
 
     /**
      * Resumo financeiro de um período personalizado
      */
-    public function getCustomPeriodReport($startDate, $endDate)
+    public function getCustomPeriodReport($startDate, $endDate, $userId = null)
     {
         $sql = "
             SELECT 
@@ -155,18 +183,24 @@ class Report extends BaseModel
                 SUM(CASE WHEN o.status = 'pending' THEN 1 ELSE 0 END) as pending_orders,
                 SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_orders
             FROM orders o
-            WHERE DATE(o.created_at) BETWEEN ? AND ?
-        ";
+            WHERE DATE(o.created_at) BETWEEN ? AND ?";
+        
+        $params = [$startDate, $endDate];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$startDate, $endDate]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAssociative();
     }
 
     /**
      * Vendas por hora do dia
      */
-    public function getSalesByHour($startDate, $endDate)
+    public function getSalesByHour($startDate, $endDate, $userId = null)
     {
         $sql = "
             SELECT 
@@ -175,23 +209,30 @@ class Report extends BaseModel
                 SUM(o.total_amount) as total_revenue
             FROM orders o
             WHERE DATE(o.created_at) BETWEEN ? AND ?
-                AND o.status != 'cancelled'
-            GROUP BY HOUR(o.created_at)
-            ORDER BY hour
-        ";
+                AND o.status != 'cancelled'";
+        
+        $params = [$startDate, $endDate];
+        
+        if ($userId) {
+            $sql .= " AND o.user_id = ?";
+            $params[] = $userId;
+        }
+        
+        $sql .= " GROUP BY HOUR(o.created_at)
+            ORDER BY hour";
         
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$startDate, $endDate]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAllAssociative();
     }
 
     /**
      * Comparação entre dois períodos
      */
-    public function comparePeriodsReport($currentStart, $currentEnd, $previousStart, $previousEnd)
+    public function comparePeriodsReport($currentStart, $currentEnd, $previousStart, $previousEnd, $userId = null)
     {
-        $current = $this->getCustomPeriodReport($currentStart, $currentEnd);
-        $previous = $this->getCustomPeriodReport($previousStart, $previousEnd);
+        $current = $this->getCustomPeriodReport($currentStart, $currentEnd, $userId);
+        $previous = $this->getCustomPeriodReport($previousStart, $previousEnd, $userId);
         
         return [
             'current' => $current,

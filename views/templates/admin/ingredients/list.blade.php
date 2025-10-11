@@ -99,14 +99,14 @@
                                             
                                             <!-- Preço -->
                                             <div class="flex items-center mt-1">
-                                                @if ($ingredient['is_free'] || $ingredient['price'] == 0)
+                                                @if ($ingredient['is_free'] || floatval($ingredient['additional_price'] ?? 0) == 0)
                                                     <span class="text-sm font-medium text-green-600">
                                                         <i class="fas fa-gift mr-1"></i>
                                                         Grátis
                                                     </span>
                                                 @else
                                                     <span class="text-sm font-medium text-gray-900">
-                                                        + {{ \App\Helpers\PriceHelper::formatPrice($ingredient['price']) }}
+                                                        + {{ \App\Helpers\PriceHelper::formatPrice($ingredient['additional_price']) }}
                                                     </span>
                                                 @endif
                                             </div>
