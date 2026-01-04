@@ -134,6 +134,31 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Banner da Loja -->
+                        <div>
+                            <label for="store_banner" class="block text-sm font-medium text-gray-700">
+                                Banner do Cabeçalho
+                            </label>
+                            <div class="mt-1 space-y-4">
+                                @if (!empty($settings['store_banner']))
+                                    <img src="{{ $settings['store_banner'] }}" alt="Banner atual" 
+                                         class="w-full h-32 rounded-lg object-cover border border-gray-300">
+                                @else
+                                    <div class="w-full h-32 rounded-lg bg-gray-100 flex items-center justify-center border border-gray-300">
+                                        <div class="text-center">
+                                            <i class="fas fa-image text-gray-400 text-3xl"></i>
+                                            <p class="mt-2 text-sm text-gray-500">Nenhum banner configurado</p>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div>
+                                    <input type="file" id="store_banner" name="store_banner" accept="image/*"
+                                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    <p class="mt-1 text-xs text-gray-500">Banner do cabeçalho do cardápio. Recomendado: 1200x300px, PNG ou JPG até 2MB</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -242,6 +267,110 @@
                 </div>
             </div>
 
+            <!-- Horários de Funcionamento -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">
+                                <i class="fas fa-clock text-purple-600 mr-2"></i>
+                                Horários de Funcionamento
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-500">
+                                Configure os horários em que sua loja aceita pedidos
+                            </p>
+                        </div>
+                        <div class="flex items-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="hidden" name="is_open" value="0">
+                                <input type="checkbox" id="is_open" name="is_open" value="1" 
+                                       {{ ($settings['is_open'] ?? 1) ? 'checked' : '' }}
+                                       class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                <span class="ml-3 text-sm font-medium text-gray-900">Loja Aberta</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 mb-4">
+                        <?php
+                        $businessHours = isset($settings['business_hours']) 
+                            ? (is_string($settings['business_hours']) 
+                                ? json_decode($settings['business_hours'], true) 
+                                : $settings['business_hours'])
+                            : [];
+                        
+                        $days = [
+                            'monday' => 'Segunda-feira',
+                            'tuesday' => 'Terça-feira',
+                            'wednesday' => 'Quarta-feira',
+                            'thursday' => 'Quinta-feira',
+                            'friday' => 'Sexta-feira',
+                            'saturday' => 'Sábado',
+                            'sunday' => 'Domingo'
+                        ];
+                        ?>
+                        
+                        @foreach($days as $dayKey => $dayName)
+                            <?php
+                            $dayData = $businessHours[$dayKey] ?? ['enabled' => true, 'open' => '09:00', 'close' => '18:00'];
+                            ?>
+                            <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                                <div class="w-32">
+                                    <label class="flex items-center cursor-pointer">
+                                        <!-- Hidden input sempre envia 0 se checkbox não estiver marcado -->
+                                        <input type="hidden" name="business_hours[{{ $dayKey }}][enabled]" value="0">
+                                        <input type="checkbox" 
+                                               name="business_hours[{{ $dayKey }}][enabled]" 
+                                               value="1"
+                                               {{ $dayData['enabled'] ? 'checked' : '' }}
+                                               class="day-enabled w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                                               onchange="toggleDayInputs(this, '{{ $dayKey }}')">
+                                        <span class="ml-2 text-sm font-medium text-gray-900">{{ $dayName }}</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="flex items-center gap-2 flex-1">
+                                    <div class="flex-1">
+                                        <label class="block text-xs text-gray-600 mb-1">Abertura</label>
+                                        <input type="time" 
+                                               name="business_hours[{{ $dayKey }}][open]" 
+                                               value="{{ $dayData['open'] }}"
+                                               class="day-input-{{ $dayKey }} w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                               {{ !$dayData['enabled'] ? 'disabled' : '' }}>
+                                    </div>
+                                    
+                                    <span class="text-gray-500 mt-5">até</span>
+                                    
+                                    <div class="flex-1">
+                                        <label class="block text-xs text-gray-600 mb-1">Fechamento</label>
+                                        <input type="time" 
+                                               name="business_hours[{{ $dayKey }}][close]" 
+                                               value="{{ $dayData['close'] }}"
+                                               class="day-input-{{ $dayKey }} w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                                               {{ !$dayData['enabled'] ? 'disabled' : '' }}>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Mensagem quando fechado -->
+                    <div>
+                        <label for="closed_message" class="block text-sm font-medium text-gray-700 mb-2">
+                            Mensagem quando fechado
+                        </label>
+                        <input type="text" 
+                               id="closed_message" 
+                               name="closed_message"
+                               value="{{ $settings['closed_message'] ?? 'No momento estamos fechados. Volte em breve!' }}"
+                               placeholder="Ex: No momento estamos fechados. Volte em breve!"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">Esta mensagem será exibida quando a loja estiver fechada</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Botão Salvar -->
             <div class="flex justify-end">
                 <button type="submit" 
@@ -292,6 +421,28 @@
                 value = value.replace(/(\d{2})(\d+)/, '($1) $2');
             }
             this.value = value;
+        });
+
+        // Toggle dos horários de funcionamento
+        function toggleDayInputs(checkbox, dayKey) {
+            const inputs = document.querySelectorAll('.day-input-' + dayKey);
+            inputs.forEach(input => {
+                input.disabled = !checkbox.checked;
+                if (!checkbox.checked) {
+                    input.classList.add('bg-gray-100', 'text-gray-400');
+                } else {
+                    input.classList.remove('bg-gray-100', 'text-gray-400');
+                }
+            });
+        }
+
+        // Inicializar estado dos inputs ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            const dayCheckboxes = document.querySelectorAll('.day-enabled');
+            dayCheckboxes.forEach(checkbox => {
+                const dayKey = checkbox.name.match(/\[(.*?)\]/)[1];
+                toggleDayInputs(checkbox, dayKey);
+            });
         });
     </script>
 </body>

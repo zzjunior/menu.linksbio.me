@@ -41,6 +41,7 @@ jobs:
           server: ${{ secrets.ftp_host }}
           username: ${{ secrets.ftp_user }}
           password: ${{ secrets.ftp_password }}
+          dangerous-clean-slate: false
           exclude: |
             **/.git*
             **/.git*/**
@@ -49,3 +50,7 @@ jobs:
             **/.env.example
             **/README.md
             **/.gitignore
+            **/docker-compose.yml
+            **/Dockerfile
+            **/.env.docker.example
+            **/MIGRATIONS_INFO.txt

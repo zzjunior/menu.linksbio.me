@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: menu-linksbio-me-app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+    # Rodando o PHP + Apache usando o Dockerfile do projeto
+
+  db:
+    image: mysql:8.0
+    container_name: menu-linksbio-me-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-menu_linksbio_me}
+      MYSQL_USER: ${DB_USERNAME:-menuuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-menupass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    # Banco de dados MySQL para desenvolvimento local
+    # As credenciais vêm do arquivo .env ou usam os valores padrão
+
+volumes:
+  db_data:
+    # Volume persistente para dados do MySQL

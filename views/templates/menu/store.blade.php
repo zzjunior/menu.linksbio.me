@@ -30,6 +30,14 @@
     </script>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
+    {{-- Banner --}}
+    @if (!empty($store['store_banner']))
+        <div class="w-full">
+            <img src="{{ $store['store_banner'] }}" alt="Banner da loja" 
+                 class="w-full h-48 md:h-64 object-cover">
+        </div>
+    @endif
+    
     {{-- Header --}}
 <header id="mainHeader" class="bg-white shadow-lg sticky top-0 z-50 transition-transform duration-300">
     <div class="container mx-auto px-4 py-4">
@@ -134,7 +142,7 @@
                             @else
                                 <button onclick="addToCart({{ $product['id'] }}, '{{ addslashes($product['name']) }}', {{ $product['price'] }})"
                                         class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
-                                    🛒 Adicionar ao Pedido
+                                    Adicionar
                                 </button>
                             @endif
                         </div>
@@ -357,7 +365,13 @@
             }, 3000);
         }
 
-        // Inicializar contador do carrinho
+    </script>
+
+    <script>
+        // Definir storeId global para uso nas funções de carrinho
+        window.storeId = {{ $store['id'] }};
+        
+        // Inicializar contador do carrinho ao carregar a página
         document.addEventListener('DOMContentLoaded', function() {
             updateCartCount();
         });

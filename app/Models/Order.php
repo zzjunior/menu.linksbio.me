@@ -11,6 +11,17 @@ class Order extends BaseModel
     {
         return $this->db;
     }
+
+    /**
+     * Buscar pedidos por telefone do cliente
+     */
+    public function getOrdersByPhone($phone)
+    {
+        $sql = "SELECT * FROM orders WHERE customer_phone = ? ORDER BY created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$phone]);
+        return $result->fetchAllAssociative();
+    }
     public function create($data)
     {
         return $this->insert('orders', $data);

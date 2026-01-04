@@ -3,6 +3,56 @@
  * Funcionalidades do cardápio e personalização de açaí
  */
 
+// Função global para adicionar produto sem personalização direto ao carrinho
+function addToCart(productId, productName, price) {
+    const cart = JSON.parse(localStorage.getItem('cart_' + window.storeId) || '[]');
+    
+    const cartItem = {
+        cart_id: 'cart_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        product_id: productId,
+        name: productName,
+        price: price,
+        quantity: 1,
+        size: '',
+        notes: '',
+        ingredients: {}
+    };
+    
+    cart.push(cartItem);
+    localStorage.setItem('cart_' + window.storeId, JSON.stringify(cart));
+    
+    // Atualizar contador do carrinho
+    updateCartCount();
+    
+    // Mostrar toast de sucesso
+    showToast('Produto adicionado ao carrinho!', 'success');
+}
+
+// Função para atualizar contador do carrinho
+function updateCartCount() {
+    const cart = JSON.parse(localStorage.getItem('cart_' + window.storeId) || '[]');
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        cartCount.textContent = cart.length;
+        cartCount.style.display = cart.length > 0 ? 'flex' : 'none';
+    }
+}
+
+// Função para mostrar toast
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    } text-white`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 class AcaiteriaApp {
     constructor() {
         this.currentProduct = null;

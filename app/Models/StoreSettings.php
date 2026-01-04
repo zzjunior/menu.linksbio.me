@@ -16,6 +16,23 @@ class StoreSettings extends BaseModel
             throw new \Exception('Usuário não autenticado');
         }
 
+        // Verificar se a coluna store_banner existe na tabela users
+        $columnsResult = $this->db->executeQuery("SHOW COLUMNS FROM users LIKE 'store_banner'");
+        $storeBannerExists = $columnsResult->fetchOne() !== false;
+        
+        // Verificar se a coluna store_banner existe na tabela stores (se a tabela existir)
+        $storeBannerStoreExists = false;
+        try {
+            $storesColumnsResult = $this->db->executeQuery("SHOW COLUMNS FROM stores LIKE 'store_banner'");
+            $storeBannerStoreExists = $storesColumnsResult->fetchOne() !== false;
+        } catch (\Exception $e) {
+            // Tabela stores não existe ou erro ao consultar
+        }
+        
+        // Construir o SELECT dinamicamente
+        $userBannerField = $storeBannerExists ? 'u.store_banner,' : '';
+        $storeBannerField = $storeBannerStoreExists ? 's.store_banner as store_banner_store,' : '';
+        
         // Buscar dados do usuário e da loja relacionada
         $sql = "SELECT 
                     u.id as user_id,
@@ -26,6 +43,7 @@ class StoreSettings extends BaseModel
                     u.whatsapp,
                     u.address,
                     u.logo,
+                    {$userBannerField}
                     u.is_active,
                     s.id as store_id,
                     s.store_name,
@@ -34,10 +52,14 @@ class StoreSettings extends BaseModel
                     s.store_phone,
                     s.store_email,
                     s.store_logo,
+                    {$storeBannerField}
                     s.delivery_fee,
                     s.loyalty_enabled,
                     s.loyalty_orders_required,
                     s.loyalty_discount_percent,
+                    s.business_hours,
+                    s.is_open,
+                    s.closed_message,
                     s.created_at,
                     s.updated_at
                 FROM users u
@@ -63,6 +85,7 @@ class StoreSettings extends BaseModel
                 'store_phone' => $data['whatsapp'] ?? '',
                 'store_email' => $data['email'] ?? '',
                 'store_logo' => $data['logo'] ?? '',
+                'store_banner' => $data['store_banner'] ?? '',
                 'delivery_fee' => 0.00,
                 'loyalty_enabled' => false,
                 'loyalty_orders_required' => 10,
@@ -84,10 +107,14 @@ class StoreSettings extends BaseModel
             'store_phone' => $data['store_phone'] ?? $data['whatsapp'],
             'store_email' => $data['store_email'] ?? $data['email'],
             'store_logo' => $data['store_logo'] ?? $data['logo'],
+            'store_banner' => $data['store_banner_store'] ?? $data['store_banner'] ?? '',
             'delivery_fee' => $data['delivery_fee'] ?? 0.00,
             'loyalty_enabled' => $data['loyalty_enabled'] ?? false,
             'loyalty_orders_required' => $data['loyalty_orders_required'] ?? 10,
             'loyalty_discount_percent' => $data['loyalty_discount_percent'] ?? 10.00,
+            'business_hours' => $data['business_hours'] ?? null,
+            'is_open' => $data['is_open'] ?? 1,
+            'closed_message' => $data['closed_message'] ?? 'No momento estamos fechados. Volte em breve!',
             // Campos do user para compatibilidade (quando o template ainda usa)
             'whatsapp' => $data['whatsapp'],
             'address' => $data['address'],
@@ -96,13 +123,22 @@ class StoreSettings extends BaseModel
     }
     
     /**
-     * Atualizar configurações da loja (na tabela stores)
+     * Atualizar configurações da loja (na tabela users OU stores)
      */
     public function updateSettings(array $data): bool
     {
         $userId = $_SESSION['user_id'] ?? null;
         if (!$userId) {
             throw new \Exception('Usuário não autenticado');
+        }
+        
+        // Verificar se a tabela stores existe
+        $tablesResult = $this->db->executeQuery("SHOW TABLES LIKE 'stores'");
+        $storesTableExists = $tablesResult->fetchOne() !== false;
+        
+        // Se a tabela stores não existe, salvar na tabela users
+        if (!$storesTableExists) {
+            return $this->updateUserSettings($userId, $data);
         }
         
         // Buscar store_id do usuário
@@ -130,10 +166,14 @@ class StoreSettings extends BaseModel
             'store_phone',
             'store_email',
             'store_logo',
+            'store_banner',
             'delivery_fee',
             'loyalty_enabled',
             'loyalty_orders_required',
-            'loyalty_discount_percent'
+            'loyalty_discount_percent',
+            'business_hours',
+            'is_open',
+            'closed_message'
         ];
         
         $updateData = [];
@@ -161,12 +201,48 @@ class StoreSettings extends BaseModel
     }
     
     /**
+     * Atualizar configurações na tabela users (quando não há tabela stores)
+     */
+    private function updateUserSettings(int $userId, array $data): bool
+    {
+        // Mapeamento de campos stores para campos users
+        $fieldMapping = [
+            'store_banner' => 'store_banner',
+            'store_logo' => 'logo',
+            'store_name' => 'store_name',
+            'store_address' => 'address',
+            'store_phone' => 'whatsapp'
+        ];
+        
+        $updateData = [];
+        $updateFields = [];
+        
+        foreach ($fieldMapping as $storeField => $userField) {
+            if (array_key_exists($storeField, $data)) {
+                $updateFields[] = "{$userField} = ?";
+                $updateData[] = $data[$storeField];
+            }
+        }
+        
+        if (empty($updateFields)) {
+            return true; // Nada para atualizar
+        }
+        
+        $updateData[] = $userId; // Para o WHERE
+        
+        $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->executeStatement($updateData) > 0;
+    }
+    
+    /**
      * Criar nova store para o usuário
      */
     private function createStoreForUser(int $userId, array $data): int
     {
         // Buscar dados do usuário para criar a store
-        $userSql = "SELECT store_name, email, whatsapp, address, logo FROM users WHERE id = ?";
+        $userSql = "SELECT store_name, email, whatsapp, address, logo, store_banner FROM users WHERE id = ?";
         $userStmt = $this->db->prepare($userSql);
         $userResult = $userStmt->executeQuery([$userId]);
         $userData = $userResult->fetchAssociative();
@@ -179,6 +255,7 @@ class StoreSettings extends BaseModel
             'store_phone' => $data['store_phone'] ?? $userData['whatsapp'] ?? '',
             'store_email' => $data['store_email'] ?? $userData['email'] ?? '',
             'store_logo' => $data['store_logo'] ?? $userData['logo'] ?? '',
+            'store_banner' => $data['store_banner'] ?? $userData['store_banner'] ?? '',
             'delivery_fee' => $data['delivery_fee'] ?? 0.00,
             'loyalty_enabled' => $data['loyalty_enabled'] ?? false,
             'loyalty_orders_required' => $data['loyalty_orders_required'] ?? 10,

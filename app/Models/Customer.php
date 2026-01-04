@@ -9,7 +9,12 @@ class Customer extends BaseModel
      */
     public function createOrUpdate($data)
     {
-        $existing = $this->findByPhone($data['phone']);
+        // Garantir que o store_id está presente
+        if (!isset($data['store_id'])) {
+            throw new \Exception('store_id é obrigatório para criar/atualizar cliente');
+        }
+        
+        $existing = $this->findByPhone($data['phone'], $data['store_id']);
         
         if ($existing) {
             // Atualizar dados do cliente existente
@@ -23,6 +28,8 @@ class Customer extends BaseModel
         } else {
             // Criar novo cliente
             return $this->insert('customers', [
+                'store_id' => $data['store_id'],
+                'user_id' => $data['user_id'] ?? null,
                 'name' => $data['name'],
                 'phone' => $data['phone'],
                 'email' => $data['email'] ?? null,
@@ -37,13 +44,22 @@ class Customer extends BaseModel
     }
 
     /**
-     * Buscar cliente por telefone
+     * Buscar cliente por telefone (para a loja específica)
      */
-    public function findByPhone($phone)
+    public function findByPhone($phone, $storeId = null)
     {
-        $sql = "SELECT * FROM customers WHERE phone = ? LIMIT 1";
+        $sql = "SELECT * FROM customers WHERE phone = ?";
+        $params = [$phone];
+        
+        if ($storeId !== null) {
+            $sql .= " AND store_id = ?";
+            $params[] = $storeId;
+        }
+        
+        $sql .= " LIMIT 1";
+        
         $stmt = $this->db->prepare($sql);
-        $result = $stmt->executeQuery([$phone]);
+        $result = $stmt->executeQuery($params);
         return $result->fetchAssociative();
     }
 
@@ -120,7 +136,7 @@ class Customer extends BaseModel
     /**
      * Listar todos os clientes com paginação
      */
-    public function getAllCustomers($page = 1, $perPage = 20, $search = '')
+    public function getAllCustomers($page = 1, $perPage = 20, $search = '', $storeId = null)
     {
         $offset = ($page - 1) * $perPage;
         
@@ -134,6 +150,12 @@ class Customer extends BaseModel
         ";
         
         $params = [];
+        
+        // Filtrar por store_id se fornecido
+        if ($storeId !== null) {
+            $sql .= " AND c.store_id = ?";
+            $params[] = $storeId;
+        }
         
         if (!empty($search)) {
             $sql .= " AND (c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ?)";

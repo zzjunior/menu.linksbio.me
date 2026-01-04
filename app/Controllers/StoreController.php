@@ -64,6 +64,24 @@ class StoreController
                 $data['store_logo'] = $logoPath;
             }
             
+            // Processar upload de banner se houver
+            if (isset($uploadedFiles['store_banner']) && $uploadedFiles['store_banner']->getError() === UPLOAD_ERR_OK) {
+                $bannerFile = $uploadedFiles['store_banner'];
+                
+                // Converter UploadedFile para array para compatibilidade
+                $fileArray = [
+                    'name' => $bannerFile->getClientFilename(),
+                    'type' => $bannerFile->getClientMediaType(),
+                    'size' => $bannerFile->getSize(),
+                    'tmp_name' => $bannerFile->getStream()->getMetadata('uri'),
+                    'error' => $bannerFile->getError()
+                ];
+                
+                // Fazer upload do banner
+                $bannerPath = $this->uploadBanner($fileArray);
+                $data['store_banner'] = $bannerPath;
+            }
+            
             // Converter valores numéricos
             if (isset($data['delivery_fee'])) {
                 $data['delivery_fee'] = floatval(str_replace(',', '.', $data['delivery_fee']));
@@ -73,6 +91,32 @@ class StoreController
             }
             if (isset($data['loyalty_discount_percent'])) {
                 $data['loyalty_discount_percent'] = floatval(str_replace(',', '.', $data['loyalty_discount_percent']));
+            }
+            
+            // Processar horários de funcionamento
+            if (isset($data['business_hours'])) {
+                $businessHours = [];
+                foreach ($data['business_hours'] as $day => $hours) {
+                    // Se enabled é array (hidden + checkbox), pegar último valor
+                    $enabled = is_array($hours['enabled']) 
+                        ? end($hours['enabled']) 
+                        : $hours['enabled'];
+                    
+                    $businessHours[$day] = [
+                        'enabled' => $enabled == '1' || $enabled === true,
+                        'open' => $hours['open'] ?? '09:00',
+                        'close' => $hours['close'] ?? '18:00'
+                    ];
+                }
+                $data['business_hours'] = json_encode($businessHours);
+            }
+            
+            // Processar checkbox is_open (pode vir como array se houver hidden + checkbox)
+            if (isset($data['is_open'])) {
+                $isOpen = is_array($data['is_open']) ? end($data['is_open']) : $data['is_open'];
+                $data['is_open'] = $isOpen == '1' ? 1 : 0;
+            } else {
+                $data['is_open'] = 0;
             }
             
             $this->storeModel->updateSettings($data);
@@ -120,6 +164,48 @@ class StoreController
         // Nome único para o arquivo
         $extension = pathinfo($fileArray['name'], PATHINFO_EXTENSION);
         $fileName = 'logo_' . time() . '.' . $extension;
+        $filePath = $uploadDir . $fileName;
+        
+        // Mover arquivo
+        if (!move_uploaded_file($fileArray['tmp_name'], $filePath)) {
+            throw new \Exception('Erro ao fazer upload do arquivo');
+        }
+        
+        // Retornar caminho relativo
+        return '/uploads/store/' . $fileName;
+    }
+
+    /**
+     * Upload de banner (método auxiliar)
+     */
+    private function uploadBanner($fileArray)
+    {
+        // Verificar se é uma imagem
+        $imageInfo = getimagesize($fileArray['tmp_name']);
+        if (!$imageInfo) {
+            throw new \Exception('O arquivo deve ser uma imagem válida');
+        }
+        
+        // Tipos permitidos
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!in_array($fileArray['type'], $allowedTypes)) {
+            throw new \Exception('Tipo de arquivo não permitido. Use JPEG, PNG, GIF ou WebP');
+        }
+        
+        // Tamanho máximo (2MB)
+        if ($fileArray['size'] > 2 * 1024 * 1024) {
+            throw new \Exception('O arquivo deve ter no máximo 2MB');
+        }
+        
+        // Criar diretório se não existir
+        $uploadDir = __DIR__ . '/../../public/uploads/store/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Nome único para o arquivo
+        $extension = pathinfo($fileArray['name'], PATHINFO_EXTENSION);
+        $fileName = 'banner_' . time() . '.' . $extension;
         $filePath = $uploadDir . $fileName;
         
         // Mover arquivo

@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\Order;
 use App\Models\User;
+use App\Models\Customer;
 use App\Services\TemplateService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -17,12 +18,14 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * Controlador para o painel administrativo
  */
 class AdminController
+
 {
     private Product $productModel;
     private Category $categoryModel;
     private Ingredient $ingredientModel;
     private Order $orderModel;
     private User $userModel;
+    private Customer $customerModel;
     private TemplateService $templateService;
 
     public function __construct(
@@ -31,6 +34,7 @@ class AdminController
         Ingredient $ingredientModel,
         Order $orderModel,
         User $userModel,
+        Customer $customerModel,
         TemplateService $templateService
     ) {
         $this->productModel = $productModel;
@@ -38,6 +42,7 @@ class AdminController
         $this->ingredientModel = $ingredientModel;
         $this->orderModel = $orderModel;
         $this->userModel = $userModel;
+        $this->customerModel = $customerModel;
         $this->templateService = $templateService;
     }
 
@@ -876,6 +881,30 @@ class AdminController
         $stmt->executeStatement(array_values($data));
         
         return (int)$this->orderModel->getConnection()->lastInsertId();
+    }
+
+    /**
+     * Lista clientes
+     */
+    public function listCustomers(Request $request, Response $response): Response
+    {
+        $userId = $_SESSION['user_id'];
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $perPage = 20;
+        
+        // Buscar o store_id do usuário
+        $user = $this->userModel->getById($userId);
+        $storeId = $user['store_id'] ?? null;
+        
+        // Filtrar clientes apenas da loja
+        $clientes = $this->customerModel->getAllCustomers($page, $perPage, '', $storeId);
+        
+        $data = [
+            'pageTitle' => 'Clientes',
+            'clientes' => $clientes
+        ];
+        
+        return $this->templateService->renderResponse($response, 'admin/customers/list', $data);
     }
 
 }

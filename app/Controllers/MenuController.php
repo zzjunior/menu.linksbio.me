@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Ingredient;
 use App\Models\User;
 use App\Services\TemplateService;
+use App\Helpers\BusinessHoursHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -74,6 +75,10 @@ class MenuController
         // Buscar regras de máximo de ingredientes por produto e tipo
         $maxIngredientsRules = $this->ingredientModel->getMaxIngredientsRules(array_column($products, 'id'));
 
+        // Verificar se a loja está aberta
+        $storeStatus = BusinessHoursHelper::isStoreOpen($store);
+        $formattedHours = BusinessHoursHelper::getFormattedHours($store);
+
         $data = [
             'store' => $store,
             'store_slug' => $storeSlug,
@@ -82,7 +87,9 @@ class MenuController
             'ingredients' => $ingredientsByType,
             'maxIngredientsRules' => $maxIngredientsRules,
             'currentCategory' => $categoryFilter,
-            'pageTitle' => $store['store_name']
+            'pageTitle' => $store['store_name'],
+            'storeStatus' => $storeStatus,
+            'formattedHours' => $formattedHours
         ];
 
         return $this->templateService->renderResponse($response, 'menu/index', $data);

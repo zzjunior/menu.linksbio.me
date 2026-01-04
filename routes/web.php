@@ -95,6 +95,7 @@ $container->set(AdminController::class, function ($container) {
         $container->get(Ingredient::class),
         $container->get(Order::class),
         $container->get(User::class),
+        $container->get(Customer::class),
         $container->get(TemplateService::class)
     );
 });
@@ -174,6 +175,8 @@ $app->get('/admin/logout', [AuthController::class, 'logout']);
 
 // === ROTAS ADMIN (protegidas) ===
 $app->group('/admin', function ($group) {
+        // Clientes
+        $group->get('/clientes', [AdminController::class, 'listCustomers']);
     $group->get('', [AdminController::class, 'dashboard']);
 
     // Uploads user admin
@@ -232,6 +235,7 @@ $app->group('/admin', function ($group) {
 
 // === ROTAS PÚBLICAS DA LOJA ===
 $app->group('/{store}', function ($group) {
+        $group->get('/meus-pedidos', [CartController::class, 'orders']);
     // Cardápio da loja
     $group->get('', [MenuController::class, 'index']);
     $group->get('/categoria/{category}', [MenuController::class, 'index']);

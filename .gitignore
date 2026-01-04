@@ -87,6 +87,11 @@ yarn.lock
 config.local.php
 database.local.php
 
+# Local documentation/notes
+MIGRATIONS_INFO.txt
+*.local.txt
+NOTAS.txt
+
 # Test files
 test.php
 setup_multistore.php

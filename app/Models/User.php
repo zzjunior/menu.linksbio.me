@@ -75,6 +75,7 @@ class User extends BaseModel
                     u.whatsapp,
                     u.address,
                     u.logo,
+                    u.store_banner as user_store_banner,
                     u.is_active,
                     s.id as store_id,
                     s.store_name as store_store_name,
@@ -83,10 +84,14 @@ class User extends BaseModel
                     s.store_phone,
                     s.store_email,
                     s.store_logo,
+                    s.store_banner,
                     s.delivery_fee,
                     s.loyalty_enabled,
                     s.loyalty_orders_required,
-                    s.loyalty_discount_percent
+                    s.loyalty_discount_percent,
+                    s.business_hours,
+                    s.is_open,
+                    s.closed_message
                 FROM users u
                 LEFT JOIN stores s ON u.store_id = s.id
                 WHERE u.store_slug = ? AND u.is_active = 1 
@@ -110,10 +115,14 @@ class User extends BaseModel
             'store_phone' => $data['store_phone'] ?? $data['whatsapp'],
             'store_email' => $data['store_email'] ?? $data['email'],
             'store_logo' => $data['store_logo'] ?? $data['logo'],
+            'store_banner' => $data['store_banner'] ?? $data['user_store_banner'] ?? '',
             'delivery_fee' => $data['delivery_fee'] ?? 0.00,
             'loyalty_enabled' => $data['loyalty_enabled'] ?? 0,
             'loyalty_orders_required' => $data['loyalty_orders_required'] ?? 10,
             'loyalty_discount_percent' => $data['loyalty_discount_percent'] ?? 10.00,
+            'business_hours' => $data['business_hours'] ?? null,
+            'is_open' => $data['is_open'] ?? 1,
+            'closed_message' => $data['closed_message'] ?? 'No momento estamos fechados. Volte em breve!',
             'store_slug' => $data['store_slug']
         ];
     }

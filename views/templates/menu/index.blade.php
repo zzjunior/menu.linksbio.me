@@ -44,38 +44,71 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-50 min-h-screen">
-    <!-- Header -->
-<header id="mainHeader" class="bg-white shadow-lg sticky top-0 z-50 transition-transform duration-300">
-    <div class="container mx-auto px-4 py-4">
+    <!-- Header com Banner como Background -->
+<header id="mainHeader" class="bg-white shadow-lg sticky top-0 z-50 transition-transform duration-300 relative @if(!empty($store['store_banner'])) bg-cover bg-center @endif" 
+        @if(!empty($store['store_banner'])) style="background-image: url('{{ $store['store_banner'] }}');" @endif>
+    <!-- Overlay opaco -->
+    @if(!empty($store['store_banner']))
+        <div class="absolute inset-0 bg-black bg-opacity-70"></div>
+    @endif
+    
+    <div class="container mx-auto px-4 py-4 relative z-10">
         <div class="flex items-center justify-between">
             <div class="flex items-center space-x-4">
                 @if (!empty($store['store_logo']))
                     <img src="{{ $store['store_logo'] }}" alt="Logo da loja"
-                         class="w-16 h-16 rounded-full object-cover border-2 border-primary flex-shrink-0">
+                         class="w-16 h-16 rounded-full object-cover border-2 border-white shadow-lg flex-shrink-0">
                 @endif
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-lg sm:text-xl font-bold text-gray-800 truncate">{{ $store['store_name'] }}</h1>
+                    <h1 class="text-lg sm:text-xl font-bold text-white truncate" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">{{ $store['store_name'] }}</h1>
                     @if (!empty($store['store_address']))
-                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($store['store_address']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($store['store_address']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-white truncate flex items-center hover:underline" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
                             <i class="fas fa-map-marker-alt mr-1"></i>
                             {{ $store['store_address'] }}
                         </a>
                     @endif
                     @if (!empty($store['store_phone']))
-                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $store['store_phone']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-gray-600 truncate flex items-center hover:underline">
+                        <a href="https://wa.me/55{{ preg_replace('/\D/', '', $store['store_phone']) }}" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm text-white truncate flex items-center hover:underline" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.8);">
                             <i class="fab fa-whatsapp mr-1"></i>
                             {{ $store['store_phone'] }}
                         </a>
                     @endif
                 </div>
             </div>
-            <a href="/{{ $store_slug }}/carrinho" class="relative bg-primary text-white p-2 rounded-full hover:bg-secondary transition-colors flex-shrink-0">
+            <a href="/{{ $store_slug }}/carrinho" class="relative bg-white bg-opacity-90 backdrop-blur-sm hover:bg-opacity-100 text-gray-900 p-2 rounded-full transition-all shadow-lg flex-shrink-0">
                 <i class="fas fa-shopping-cart p-2" style="font-size: 0.7rem;"></i>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-md">0</span>
             </a>
         </div>
     </div>
 </header>
+
+<!-- Status da Loja (Aberto/Fechado) -->
+<div id="storeStatusBanner" class="sticky top-16 z-40 transition-all duration-300">
+    @if(!$storeStatus['is_open'])
+        <!-- Loja Fechada - Banner vermelho -->
+        <div class="bg-red-600 text-white py-3 px-4 shadow-md">
+            <div class="container mx-auto flex items-center justify-center gap-3">
+                <i class="fas fa-store-slash text-xl"></i>
+                <div class="text-center">
+                    <p class="font-bold text-sm">🔒 Loja Fechada</p>
+                    <p class="text-xs opacity-90">{{ $storeStatus['message'] }}</p>
+                    @if($storeStatus['next_opening'])
+                        <p class="text-xs mt-1 opacity-80">{{ $storeStatus['next_opening'] }}</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @else
+        <!-- Loja Aberta - Banner verde discreto -->
+        <div class="bg-green-600 text-white py-2 px-4">
+            <div class="container mx-auto flex items-center justify-center gap-2">
+                <i class="fas fa-store text-sm"></i>
+                <p class="text-xs font-medium">✅ {{ $storeStatus['message'] }}</p>
+            </div>
+        </div>
+    @endif
+</div>
 
 <!-- Filtros de Categoria -->
 @if (!empty($categories))
@@ -127,12 +160,12 @@ document.addEventListener('DOMContentLoaded', function() {
         @else
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach ($products as $product)
-                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+                    <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden {{ !$storeStatus['is_open'] ? 'opacity-60' : '' }}">
                         @if ($product['image_url'])
                             <div class="h-40 bg-gradient-to-br from-primary/20 to-accent/20 relative overflow-hidden">
                                 <img src="{{ $product['image_url'] }}" 
                                      alt="{{ $product['name'] }}"
-                                     class="w-full h-full object-cover">
+                                     class="w-full h-full object-cover {{ !$storeStatus['is_open'] ? 'grayscale' : '' }}">
                             </div>
                         @else
                             <div class="h-40 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
@@ -159,15 +192,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </p>
                             @endif
                             
-                            @if ($product['max_ingredients'] > 0)
-                                <button onclick="openCustomizeModal({{ $product['id'] }})" 
-                                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
-                                    🎯 Monte o seu
+                            @if (!$storeStatus['is_open'])
+                                <button disabled
+                                        class="w-full bg-gray-400 text-white py-2 px-4 rounded-lg font-medium cursor-not-allowed">
+                                    <i class="fas fa-lock"></i> Loja Fechada
                                 </button>
                             @else
-                                <button onclick="addToCart({{ $product['id'] }}, '{{ addslashes($product['name']) }}', {{ $product['price'] }})"
+                                <button onclick="openCustomizeModal({{ $product['id'] }})" 
                                         class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2 px-4 rounded-lg font-medium hover:from-primary/90 hover:to-secondary/90 transition-all duration-200">
-                                    🛒 Adicionar ao Pedido
+                                    @if ($product['max_ingredients'] > 0)
+                                        🎯 Monte o seu
+                                    @else
+                                        <i class="fas fa-plus"></i> Adicionar
+                                    @endif
                                 </button>
                             @endif
                         </div>
@@ -262,16 +299,39 @@ function renderModalContent() {
         <input type="hidden" id="productId" value="${product.id}">
         <input type="hidden" id="productName" value="${product.name}">
         <input type="hidden" id="basePrice" value="${product.price}">
+        
+        <!-- Imagem e Descrição do Produto -->
+        ${product.image_url ? `
+        <div class="mb-4 -mx-4 -mt-4">
+            <img src="${product.image_url}" alt="${product.name}" class="w-full h-48 object-cover">
+        </div>
+        ` : ''}
+        
+        <div class="mb-4">
+            <h2 class="text-xl font-bold text-gray-900 mb-2">${product.name}</h2>
+            ${product.description ? `<p class="text-gray-600 text-sm mb-2">${product.description}</p>` : ''}
+            <p class="text-primary font-bold text-lg">R$ ${parseFloat(product.price).toFixed(2).replace('.', ',')}</p>
+        </div>
+        
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
             ${renderStepper('qtyValue', productQty, 1, 10, 'changeProductQty(-1)', 'changeProductQty(1)')}
         </div>
     `;
 
-    for (let i = 0; i < productQty; i++) {
-        content += `<div class="mb-2 p-2 border rounded bg-gray-50">
-            <div class="font-semibold text-primary mb-2">Pedido n° ${i + 1}</div>`;
-        if (product.ingredients) {
+    // Só mostra seção de personalização se houver ingredientes
+    const hasIngredients = product.ingredients && Object.keys(product.ingredients).some(type => 
+        product.ingredients[type] && product.ingredients[type].length > 0
+    );
+
+    if (hasIngredients) {
+        for (let i = 0; i < productQty; i++) {
+            content += `<div class="mb-4 p-3 border border-primary/20 rounded-lg bg-gradient-to-br from-purple-50/50 to-pink-50/50">
+                <div class="font-semibold text-primary mb-3 flex items-center gap-2">
+                    <i class="fas fa-utensils"></i>
+                    Personalize seu pedido ${productQty > 1 ? `(nº ${i + 1})` : ''}
+                </div>`;
+            
             Object.keys(product.ingredients).forEach(type => {
                 const maxPorTipo = productRules[type] || null;
                 if (product.ingredients[type] && product.ingredients[type].length > 0) {
@@ -286,9 +346,9 @@ function renderModalContent() {
                         const img = ingredient.image_url || '/assets/images/ingredients/default.jpg';
                         const price = ingredient.additional_price > 0 ? `<span class="text-green-600 text-xs mt-1">+R$ ${parseFloat(ingredient.additional_price).toFixed(2).replace('.', ',')}</span>` : '';
                         content += `
-                            <div class="flex flex-col items-center bg-white rounded-lg p-2 min-w-[90px]">
+                            <div class="flex flex-col items-center bg-white rounded-lg p-2 min-w-[90px] shadow-sm">
                                 <img src="${img}" alt="${ingredient.name}" class="w-12 h-12 object-cover rounded mb-1">
-                                <span class="text-xs text-center mb-1">${ingredient.name}</span>
+                                <span class="text-xs text-center mb-1 font-medium">${ingredient.name}</span>
                                 ${renderStepper(
                                     `ingredient-qty-${ingredient.id}-unit${i}`,
                                     selectedIngredients[i][ingredient.id]?.qty || 0,
@@ -304,17 +364,20 @@ function renderModalContent() {
                     content += `</div></div>`;
                 }
             });
+            content += `</div>`;
         }
-        content += `</div>`;
     }
 
     content += `
         <div class="mb-4">
-            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+            <label for="notes" class="block text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                <i class="fas fa-comment-dots text-primary"></i>
+                Alguma observação?
+            </label>
             <textarea id="notes" 
-                class="w-full border border-gray-300 rounded-md px-3 py-2" 
+                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all" 
                 rows="3" 
-                placeholder="Alguma observação especial?"></textarea>
+                placeholder="Ex: sem cebola, ponto da carne, retirar ingrediente..."></textarea>
         </div>
     `;
 
@@ -463,6 +526,54 @@ function addCustomizedToCart() {
     }, 100);
 }
 </script>
+
+<!-- Rodapé com Horários -->
+@if(!empty($formattedHours))
+<footer class="bg-white border-t mt-8 py-6">
+    <div class="container mx-auto px-4">
+        <button onclick="document.getElementById('hoursModal').classList.remove('hidden')" 
+                class="text-primary hover:text-secondary flex items-center gap-2 mx-auto">
+            <i class="far fa-clock"></i>
+            Ver horários de funcionamento
+        </button>
+    </div>
+</footer>
+
+<!-- Modal de Horários -->
+<div id="hoursModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full shadow-xl">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="far fa-clock text-primary mr-2"></i>
+                Horários de Funcionamento
+            </h3>
+            <button onclick="document.getElementById('hoursModal').classList.add('hidden')" 
+                    class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-4">
+            <div class="space-y-2">
+                @foreach($formattedHours as $dayHours)
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-sm font-medium text-gray-700">{{ $dayHours['day'] }}</span>
+                        <span class="text-sm {{ $dayHours['enabled'] ? 'text-green-600 font-medium' : 'text-red-500' }}">
+                            {{ $dayHours['hours'] }}
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-b-lg">
+            <p class="text-xs text-gray-600 text-center">
+                <i class="fas fa-info-circle mr-1"></i>
+                Os horários podem variar em feriados
+            </p>
+        </div>
+    </div>
+</div>
+@endif
+
 </body>
 </html>
 

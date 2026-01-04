@@ -35,10 +35,10 @@ class CartController
         }
         $_SESSION['cart_' . $store['id']] = $cart;
 
-    $response->getBody()->write(json_encode(['success' => true]));
-    return $response->withHeader('Content-Type', 'application/json')
-        ->withStatus(200);
-}
+        $response->getBody()->write(json_encode(['success' => true]));
+        return $response->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
+    }
 
     private Product $productModel;
     private Ingredient $ingredientModel;
@@ -70,6 +70,26 @@ class CartController
         $this->storeSettingsModel = $storeSettingsModel;
         $this->templateService = $templateService;
         $this->pdo = $pdo;
+    }
+
+    /**
+     * Exibe pedidos do cliente logado (por telefone)
+     */
+    public function orders(Request $request, Response $response, array $args): Response
+    {
+        $storeSlug = $args['store'] ?? '';
+        $customerPhone = isset($_SESSION['customer_phone']) ? $_SESSION['customer_phone'] : null;
+        if (!$customerPhone) {
+            $_SESSION['error'] = 'Você precisa informar seu telefone para ver seus pedidos.';
+            return $response->withHeader('Location', "/{$storeSlug}/checkout")->withStatus(302);
+        }
+        $orderModel = $this->orderModel;
+        $pedidos = $orderModel->getOrdersByPhone($customerPhone);
+        $data = [
+            'pedidos' => $pedidos,
+            'storeSlug' => $storeSlug
+        ];
+        return $this->templateService->renderResponse($response, 'cart/orders', $data);
     }
 
     /**
@@ -281,8 +301,8 @@ class CartController
     /**
      * Processa o pedido e envia para WhatsApp
      */
-public function processOrder(Request $request, Response $response, array $args): Response
-{
+    public function processOrder(Request $request, Response $response, array $args): Response
+    {
     $storeSlug = $args['store'] ?? '';
     $store = $this->userModel->getStoreBySlug($storeSlug);
 
@@ -390,8 +410,8 @@ public function processOrder(Request $request, Response $response, array $args):
         $orderNumber = $orderId;
         $storeName = $store['store_name'];
         $estimate = '10 - 30 minutos';
-        //$orderUrl = "https://instadelivery.com.br/order/{$storeSlug}";
-        //$repeatUrl = "https://instadelivery.com.br/querodenovo/" . $orderNumber;
+        $orderUrl = "https://menu.linksbio.me/order/{$storeSlug}";
+        $repeatUrl = "https://menu.linksbio.me/querodenovo/" . $orderNumber;
         $orderTypeText = $orderType === 'delivery' ? 'Delivery' : 'Retirada Balcão';
         $deliveryFee = $orderType === 'delivery' ? floatval($storeSettings['delivery_fee'] ?? 0.00) : 0.00;
         $discount = 0.00;
@@ -496,6 +516,5 @@ public function processOrder(Request $request, Response $response, array $args):
         $_SESSION['error'] = 'Erro ao processar pedido. Tente novamente.';
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
     }
-}
-
+    }
 }

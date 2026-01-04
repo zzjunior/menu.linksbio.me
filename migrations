@@ -1,0 +1,64 @@
+#!/usr/bin/env php
+<?php
+/**
+ * Doctrine Migrations CLI
+ * Comandos principais:
+ *   php migrations migrate              - Executa migrations pendentes
+ *   php migrations migrate:rollback     - Reverte a última migration
+ *   php migrations migrate:status       - Status das migrations
+ *   php migrations make:migration Nome  - Cria nova migration
+ */
+
+use Doctrine\Migrations\Configuration\Migration\PhpFile;
+use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\DependencyFactory;
+use Doctrine\DBAL\DriverManager;
+use Symfony\Component\Console\Application;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+// Carregar configuração do banco
+$dbConfig = require __DIR__ . '/config/settings.php';
+
+// Conectar ao banco
+$connection = DriverManager::getConnection([
+    'dbname' => $dbConfig['db']['database'],
+    'user' => $dbConfig['db']['username'],
+    'password' => $dbConfig['db']['password'],
+    'host' => $dbConfig['db']['host'],
+    'driver' => 'pdo_mysql',
+    'charset' => 'utf8mb4',
+]);
+
+// Carregar configuração das migrations
+$migrationConfig = new PhpFile(__DIR__ . '/config/migrations.php');
+
+// Criar DependencyFactory
+$dependencyFactory = DependencyFactory::fromConnection(
+    $migrationConfig,
+    new ExistingConnection($connection)
+);
+
+// Criar aplicação CLI
+$cli = new Application('Doctrine Migrations');
+$cli->setCatchExceptions(true);
+
+// Adicionar comandos do Doctrine Migrations
+$cli->addCommands([
+    new \Doctrine\Migrations\Tools\Console\Command\DumpSchemaCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\ExecuteCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\GenerateCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\LatestCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\ListCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\MigrateCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\RollupCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\StatusCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\SyncMetadataCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\VersionCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\UpToDateCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\CurrentCommand($dependencyFactory),
+    new \Doctrine\Migrations\Tools\Console\Command\DiffCommand($dependencyFactory),
+]);
+
+// Executar CLI
+$cli->run();

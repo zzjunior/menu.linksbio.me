@@ -84,6 +84,10 @@
                     <i class="fas fa-external-link-alt mr-1"></i>
                     <span>Ver Cardápio</span>
                 </a>
+                <a href="/admin/loja/configuracoes" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
+                    <i class="fas fa-cog mr-1"></i>
+                    <span>Configurações</span>
+                </a>
                 <a href="/admin/logout" class="text-red-600 hover:text-red-800 text-sm flex items-center">
                     <i class="fas fa-sign-out-alt mr-1"></i>
                     <span>Sair</span>
@@ -238,6 +242,15 @@
                             <div class="text-3xl mb-2">📋</div>
                             <h4 class="text-lg font-medium text-orange-900">Pedidos</h4>
                             <p class="text-sm text-orange-700">Gerenciar pedidos da loja</p>
+                        </div>
+                    </a>
+
+                    <a href="/admin/clientes" 
+                       class="block p-6 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors">
+                        <div class="text-center">
+                            <div class="text-3xl mb-2">👥</div>
+                            <h4 class="text-lg font-medium text-pink-900">Clientes</h4>
+                            <p class="text-sm text-pink-700">Visualizar clientes cadastrados</p>
                         </div>
                     </a>
                 </div>
