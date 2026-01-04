@@ -368,6 +368,21 @@
                                class="w-full px-3 py-2 border border-gray-300 rounded-md">
                         <p class="mt-1 text-xs text-gray-500">Esta mensagem será exibida quando a loja estiver fechada</p>
                     </div>
+
+                    <!-- Chave PIX -->
+                    <div>
+                        <label for="pix_key" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-qrcode mr-1"></i>
+                            Chave PIX
+                        </label>
+                        <input type="text" 
+                               id="pix_key" 
+                               name="pix_key"
+                               value="{{ $settings['pix_key'] ?? '' }}"
+                               placeholder="Ex: fortalecai2025@gmail.com ou seu CPF/CNPJ"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <p class="mt-1 text-xs text-gray-500">Esta chave será exibida nos comprovantes de pedidos</p>
+                    </div>
                 </div>
             </div>
 

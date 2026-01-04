@@ -42,15 +42,28 @@ jobs:
           username: ${{ secrets.ftp_user }}
           password: ${{ secrets.ftp_password }}
           dangerous-clean-slate: false
+          state-name: .ftp-deploy-sync-state-v2.json
           exclude: |
             **/.git*
             **/.git*/**
             **/node_modules/**
             **/tests/**
+            **/test/**
             **/.env.example
             **/README.md
             **/.gitignore
+            **/.gitattributes
             **/docker-compose.yml
             **/Dockerfile
             **/.env.docker.example
             **/MIGRATIONS_INFO.txt
+            **/DEPLOY_INSTRUCTIONS.txt
+            **/composer.json
+            **/composer.lock
+            **/phpunit.xml
+            **/.vscode/**
+            **/.idea/**
+            **/migrations
+            **/bin/**
+            **/config/migrations.php
+            **/database/migrations/**

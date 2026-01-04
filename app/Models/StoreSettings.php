@@ -60,6 +60,7 @@ class StoreSettings extends BaseModel
                     s.business_hours,
                     s.is_open,
                     s.closed_message,
+                    s.pix_key,
                     s.created_at,
                     s.updated_at
                 FROM users u
@@ -115,6 +116,7 @@ class StoreSettings extends BaseModel
             'business_hours' => $data['business_hours'] ?? null,
             'is_open' => $data['is_open'] ?? 1,
             'closed_message' => $data['closed_message'] ?? 'No momento estamos fechados. Volte em breve!',
+            'pix_key' => $data['pix_key'] ?? '',
             // Campos do user para compatibilidade (quando o template ainda usa)
             'whatsapp' => $data['whatsapp'],
             'address' => $data['address'],
@@ -173,7 +175,8 @@ class StoreSettings extends BaseModel
             'loyalty_discount_percent',
             'business_hours',
             'is_open',
-            'closed_message'
+            'closed_message',
+            'pix_key'
         ];
         
         $updateData = [];

@@ -47,7 +47,14 @@ class ThermalPrintService
             strtoupper($store['store_name']) . "\n",
             "\x1B\x61\x00", // Esquerda
             "\n",
-            "Tel: (85) 99999-9999\n",
+        ];
+        
+        if (!empty($store['store_phone'])) {
+            $commands[] = "Tel: " . $store['store_phone'] . "\n";
+        }
+        if (!empty($store['store_email'])) {
+            $commands[] = $store['store_email'] . "\n";
+        }
             "@acaiteria\n",
             "\n",
             str_repeat("=", 32) . "\n",
@@ -99,7 +106,9 @@ class ThermalPrintService
         $commands[] = "PAGUE VIA PIX\n";
         $commands[] = "\x1B\x61\x00"; // Esquerda
         $commands[] = "\n";
-        $commands[] = "Chave: fortalecai2025@gmail.com\n";
+        if (!empty($store['pix_key'])) {
+            $commands[] = "Chave: " . $store['pix_key'] . "\n";
+        }
         $commands[] = "\n\n";
         $commands[] = "\x1B\x61\x01"; // Centro
         $commands[] = "Obrigado!\n";
@@ -130,10 +139,16 @@ class ThermalPrintService
         </style>
         
         <div class="center bold">' . strtoupper($store['store_name']) . '</div>
-        <br>
-        <div class="center">Tel: (85) 99999-9999</div>
-        <div class="center">@acaiteria</div>
-        <br>
+        <br>';
+        
+        if (!empty($store['store_phone'])) {
+            $html .= '<div class="center">Tel: ' . htmlspecialchars($store['store_phone']) . '</div>';
+        }
+        if (!empty($store['store_email'])) {
+            $html .= '<div class="center">' . htmlspecialchars($store['store_email']) . '</div>';
+        }
+        
+        $html .= '<br>
         <div class="center">' . str_repeat("=", 32) . '</div>
         <br>
         
@@ -178,9 +193,13 @@ class ThermalPrintService
         <div class="center">' . str_repeat("=", 32) . '</div>
         <br>
         <div class="center bold">PAGUE VIA PIX</div>
-        <br>
-        <div class="center">Chave: fortalecai2025@gmail.com</div>
-        <br><br>
+        <br>';
+        
+        if (!empty($store['pix_key'])) {
+            $html .= '<div class="center">Chave: ' . htmlspecialchars($store['pix_key']) . '</div>';
+        }
+        
+        $html .= '<br><br>
         <div class="center bold">Obrigado!</div>
         <br><br><br>';
         

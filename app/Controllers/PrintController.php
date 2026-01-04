@@ -98,8 +98,12 @@ class PrintController
         $output .= "\x1B\x21\x00"; // Fonte normal
         $output .= "\x1B\x61\x00"; // Alinhar à esquerda
         $output .= "\n";
-        $output .= "Tel: (85) 99999-9999\n";
-        $output .= "@acaiteria\n";
+        if (!empty($store['store_phone'])) {
+            $output .= "Tel: " . $store['store_phone'] . "\n";
+        }
+        if (!empty($store['store_email'])) {
+            $output .= $store['store_email'] . "\n";
+        }
         $output .= "\n";
         $output .= str_repeat("=", 32) . "\n";
         $output .= "\n";
@@ -153,7 +157,9 @@ class PrintController
         $output .= "PAGUE VIA PIX\n";
         $output .= "\x1B\x61\x00"; // Alinhar à esquerda
         $output .= "\n";
-        $output .= "Chave: fortalecai2025@gmail.com\n";
+        if (!empty($store['pix_key'])) {
+            $output .= "Chave: " . $store['pix_key'] . "\n";
+        }
         $output .= "\n\n";
         $output .= "\x1B\x61\x01"; // Centralizar
         $output .= "Obrigado!\n";
@@ -210,9 +216,16 @@ class PrintController
         </head>
         <body>
             <div class="center bold large">' . strtoupper($store['store_name']) . '</div>
-            <br>
-            <div class="center">Tel: (85) 99999-9999</div>
-            <div class="center">@acaiteria</div>
+            <br>';
+        
+        if (!empty($store['store_phone'])) {
+            $html .= '<div class="center">Tel: ' . htmlspecialchars($store['store_phone']) . '</div>';
+        }
+        if (!empty($store['store_email'])) {
+            $html .= '<div class="center">' . htmlspecialchars($store['store_email']) . '</div>';
+        }
+        
+        $html .= '
             <br>
             <div class="center">================================</div>
             <br>
@@ -257,9 +270,13 @@ class PrintController
             <div class="center">================================</div>
             <br>
             <div class="center bold">PAGUE VIA PIX</div>
-            <br>
-            <div class="center">Chave: fortalecai2025@gmail.com</div>
-            <br><br>
+            <br>';
+        
+        if (!empty($store['pix_key'])) {
+            $html .= '<div class="center">Chave: ' . htmlspecialchars($store['pix_key']) . '</div>';
+        }
+        
+        $html .= '<br><br>
             <div class="center bold">Obrigado!</div>
             <br><br><br>
         </body>
@@ -279,7 +296,17 @@ class PrintController
             return null;
         }
 
-        $store = $this->userModel->getById($order['user_id']);
+        // Buscar dados da store (não do user)
+        $stmtStore = $this->pdo->prepare("
+            SELECT u.id as user_id, u.name, u.email, u.store_slug,
+                   s.id as store_id, s.store_name, s.store_phone, s.store_email, 
+                   s.store_address, s.store_logo, s.pix_key
+            FROM users u
+            LEFT JOIN stores s ON u.store_id = s.id
+            WHERE u.id = ?
+        ");
+        $stmtStore->execute([$order['user_id']]);
+        $store = $stmtStore->fetch(\PDO::FETCH_ASSOC);
 
         // Busca itens do pedido
         $stmt = $this->pdo->prepare("SELECT * FROM order_items WHERE order_id = ?");

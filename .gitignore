@@ -89,6 +89,7 @@ database.local.php
 
 # Local documentation/notes
 MIGRATIONS_INFO.txt
+DEPLOY_INSTRUCTIONS.txt
 *.local.txt
 NOTAS.txt
 
