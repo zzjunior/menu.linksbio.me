@@ -33,9 +33,17 @@
 // Dados dos ingredientes e produtos passados do PHP
 const ingredientsData = @json($ingredients ?? []);
 const productsData = @json($products ?? []);
+const sessionCart = @json($session_cart ?? []);
 
 console.log('Products Data:', productsData); // Debug
 console.log('Ingredients Data:', ingredientsData); // Debug
+console.log('Session Cart:', sessionCart); // Debug
+
+// Sincronizar carrinho da sessão PHP com localStorage
+if (sessionCart && sessionCart.length > 0) {
+    localStorage.setItem('cart_{{ $store['store_id'] }}', JSON.stringify(sessionCart));
+    console.log('Carrinho sincronizado da sessão para localStorage');
+}
 
 // Função para buscar dados do ingrediente por ID
 function getIngredientData(ingredientId) {
@@ -50,7 +58,7 @@ function getProductData(productId) {
 }
 
 function renderCart() {
-    const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
+    const cart = JSON.parse(localStorage.getItem('cart_{{ $store['store_id'] }}') || '[]');
     const cartItemsDiv = document.getElementById('cart-items');
     const cartSummaryDiv = document.getElementById('cart-summary');
     cartItemsDiv.innerHTML = '';

@@ -39,7 +39,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Status do Pedido -->
+        {{-- Status do Pedido --}}
         <div class="bg-white shadow rounded-lg p-6 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
                 <h2 class="text-xl font-semibold text-gray-900">Status do Pedido</h2>
@@ -68,7 +68,7 @@
                         {{ $statusLabel }}
                     </span>
                     
-                    <!-- Dropdown para alterar status -->
+                    {{-- Dropdown para alterar status --}}
                     <div class="no-print">
                         <form method="POST" action="/admin/pedidos/{{ $order['id'] }}/status" class="flex items-center gap-2">
                             <label for="status" class="text-sm font-medium text-gray-700">Alterar para:</label>
@@ -103,7 +103,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Informações do Cliente -->
+            {{-- Informações do Cliente --}}
             <div class="bg-white shadow rounded-lg p-6">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-user text-blue-600"></i>
@@ -140,7 +140,7 @@
                 </div>
             </div>
 
-            <!-- Ações Rápidas -->
+            {{-- Ações Rápidas --}}
             <div class="bg-white shadow rounded-lg p-6 no-print">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <i class="fas fa-tools text-green-600"></i>
@@ -164,14 +164,14 @@
                         <a href="/admin/print-order-pdf/{{ $order['id'] }}" 
                            target="_blank"
                            class="flex-1 bg-indigo-600 text-white px-4 py-3 rounded hover:bg-indigo-700 flex items-center justify-center gap-2">
-                            <i class="fas fa-file-pdf"></i> PDF
+                            <i class="fas fa-file-pdf"></i> Imprimir
                         </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Itens do Pedido -->
+        {{-- Itens do Pedido --}}
         <div class="bg-white shadow rounded-lg p-6 mt-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <i class="fas fa-shopping-cart text-orange-600"></i>

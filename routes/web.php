@@ -66,6 +66,10 @@ $container->set(Customer::class, function ($container) {
     return new Customer($container->get('db'));
 });
 
+$container->set(\App\Services\EmailService::class, function () {
+    return new \App\Services\EmailService();
+});
+
 $container->set(Report::class, function ($container) {
     return new Report($container->get('db'));
 });
@@ -76,6 +80,10 @@ $container->set(StoreSettings::class, function ($container) {
 
 $container->set(Store::class, function ($container) {
     return new Store($container->get('db'));
+});
+
+$container->set(\App\Services\SessionService::class, function ($container) {
+    return new \App\Services\SessionService($container->get('db'));
 });
 
 $container->set(MenuController::class, function ($container) {
@@ -104,7 +112,9 @@ $container->set(AuthController::class, function ($container) {
     return new AuthController(
         $container->get(User::class),
         $container->get(Store::class),
-        $container->get(TemplateService::class)
+        $container->get(TemplateService::class),
+        $container->get(\App\Services\SessionService::class),
+        $container->get(\App\Services\EmailService::class)
     );
 });
 
@@ -152,6 +162,7 @@ $container->set(OrderController::class, function ($container) {
 $container->set(ReportController::class, function ($container) {
     return new ReportController(
         $container->get(Report::class),
+        $container->get(User::class),
         $container->get(TemplateService::class)
     );
 });
@@ -171,7 +182,13 @@ $app->get('/admin/login', [AuthController::class, 'loginForm']);
 $app->post('/admin/login', [AuthController::class, 'login']);
 $app->get('/admin/register', [AuthController::class, 'registerForm']);
 $app->post('/admin/register', [AuthController::class, 'register']);
+$app->get('/verify-email', [AuthController::class, 'verifyEmail']);
 $app->get('/admin/logout', [AuthController::class, 'logout']);
+
+// Redirecionar /admin/ para /admin (remover barra final)
+$app->get('/admin/', function ($request, $response) {
+    return $response->withHeader('Location', '/admin')->withStatus(301);
+});
 
 // === ROTAS ADMIN (protegidas) ===
 $app->group('/admin', function ($group) {
@@ -210,8 +227,8 @@ $app->group('/admin', function ($group) {
     $group->get('/pedidos', [OrderController::class, 'listOrders']);
     $group->get('/pedidos/novo', [AdminController::class, 'newTableOrder']);
     $group->post('/pedidos/novo', [AdminController::class, 'createTableOrder']);
-    $group->get('/pedidos/{id}', [OrderController::class, 'viewOrder']);
     $group->post('/pedidos/{id}/status', [AdminController::class, 'updateOrderStatus']);
+    $group->get('/pedidos/{id}', [OrderController::class, 'viewOrder']);
     
     // Relatórios Financeiros
     $group->get('/relatorios', [ReportController::class, 'dashboard']);
@@ -230,12 +247,27 @@ $app->group('/admin', function ($group) {
         return $response->withHeader('Location', '/admin/login')->withStatus(302);
     }
     
+    // Validar sessão no banco (verificar IP e User-Agent para detectar hijacking)
+    $sessionService = $this->get(\App\Services\SessionService::class);
+    $serverParams = $request->getServerParams();
+    $sessionId = session_id();
+    $ipAddress = $serverParams['REMOTE_ADDR'] ?? '0.0.0.0';
+    $userAgent = $serverParams['HTTP_USER_AGENT'] ?? 'Unknown';
+    
+    if (!$sessionService->validateSession($sessionId, $ipAddress, $userAgent)) {
+        // Sessão inválida ou hijacking detectado
+        session_destroy();
+        $_SESSION = [];
+        $response = new \Slim\Psr7\Response();
+        return $response->withHeader('Location', '/admin/login?error=session_invalid')->withStatus(302);
+    }
+    
     return $handler->handle($request);
 });
 
 // === ROTAS PÚBLICAS DA LOJA ===
 $app->group('/{store}', function ($group) {
-        $group->get('/meus-pedidos', [CartController::class, 'orders']);
+    $group->get('/meus-pedidos', [CartController::class, 'orders']);
     // Cardápio da loja
     $group->get('', [MenuController::class, 'index']);
     $group->get('/categoria/{category}', [MenuController::class, 'index']);
@@ -255,6 +287,10 @@ $app->group('/{store}', function ($group) {
     $group->get('/checkout', [CartController::class, 'checkout']);
     $group->post('/checkout', [CartController::class, 'processOrder']);
 });
+
+// Rotas de acompanhamento de pedido (fora do grupo para não conflitar)
+$app->get('/order/{store}', [OrderController::class, 'trackOrder']);
+$app->get('/querodenovo/{id}', [OrderController::class, 'repeatOrder']);
 
 
 //** === ROTA PRINTPEDIDO

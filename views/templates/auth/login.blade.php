@@ -7,12 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-purple-600 to-blue-600 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+<body class="bg-gradient-to-br from-purple-600 to-blue-600 min-h-screen flex flex-col">
+    <div class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <div class="text-center mb-6">
             <i class="fas fa-user-shield text-4xl text-purple-600 mb-2"></i>
-            <h1 class="text-2xl font-bold text-gray-800">Login Admin</h1>
-            <p class="text-gray-600">Acesse seu painel administrativo</p>
+            <h1 class="text-2xl font-bold text-gray-800">Login</h1>
+            <p class="text-gray-600">Acesse seu painel - menu.linksbio.me</p>
         </div>
 
         @if ($error)
@@ -72,5 +73,13 @@
             </p>
         </div>
     </div>
+    </div>
+    <footer class="py-4 text-center text-gray-300 text-sm">
+        &copy; {{ date('Y') }} menu.linksbio.me
+        <p class="mb-4">
+            Todos os direitos reservados.
+        </p>
+        Criado por <a href="https://junior.linksbio.me" class="hover:text-gray-400 font-medium text-sm underline" target="_blank">linksbio.me - Júnior Santos</a>
+    </footer>
 </body>
 </html>

@@ -7,7 +7,7 @@ class Report extends BaseModel
     /**
      * Relatório financeiro diário
      */
-    public function getDailyFinancialReport($date = null, $userId = null)
+    public function getDailyFinancialReport($date = null, $storeId = null)
     {
         if (!$date) {
             $date = date('Y-m-d');
@@ -29,9 +29,9 @@ class Report extends BaseModel
         
         $params = [$date];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $sql .= " GROUP BY DATE(o.created_at)";
@@ -60,7 +60,7 @@ class Report extends BaseModel
     /**
      * Relatório financeiro semanal
      */
-    public function getWeeklyFinancialReport($startDate = null, $userId = null)
+    public function getWeeklyFinancialReport($startDate = null, $storeId = null)
     {
         if (!$startDate) {
             $startDate = date('Y-m-d', strtotime('monday this week'));
@@ -81,9 +81,9 @@ class Report extends BaseModel
         
         $params = [$startDate, $endDate];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $sql .= " GROUP BY DATE(o.created_at)
@@ -97,7 +97,7 @@ class Report extends BaseModel
     /**
      * Relatório financeiro mensal  
      */
-    public function getMonthlyFinancialReport($year = null, $month = null, $userId = null)
+    public function getMonthlyFinancialReport($year = null, $month = null, $storeId = null)
     {
         if (!$year) $year = date('Y');
         if (!$month) $month = date('m');
@@ -117,9 +117,9 @@ class Report extends BaseModel
         
         $params = [$year, $month];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $sql .= " GROUP BY DATE(o.created_at)
@@ -133,7 +133,7 @@ class Report extends BaseModel
     /**
      * Relatório de produtos mais vendidos em um período
      */
-    public function getTopProducts($startDate, $endDate, $limit = 10, $userId = null)
+    public function getTopProducts($startDate, $endDate, $limit = 10, $storeId = null)
     {
         $sql = "
             SELECT 
@@ -151,9 +151,9 @@ class Report extends BaseModel
         
         $params = [$startDate, $endDate];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $sql .= " GROUP BY p.id, p.name, p.image
@@ -168,7 +168,7 @@ class Report extends BaseModel
     /**
      * Resumo financeiro de um período personalizado
      */
-    public function getCustomPeriodReport($startDate, $endDate, $userId = null)
+    public function getCustomPeriodReport($startDate, $endDate, $storeId = null)
     {
         $sql = "
             SELECT 
@@ -187,9 +187,9 @@ class Report extends BaseModel
         
         $params = [$startDate, $endDate];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $stmt = $this->db->prepare($sql);
@@ -200,7 +200,7 @@ class Report extends BaseModel
     /**
      * Vendas por hora do dia
      */
-    public function getSalesByHour($startDate, $endDate, $userId = null)
+    public function getSalesByHour($startDate, $endDate, $storeId = null)
     {
         $sql = "
             SELECT 
@@ -213,9 +213,9 @@ class Report extends BaseModel
         
         $params = [$startDate, $endDate];
         
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         $sql .= " GROUP BY HOUR(o.created_at)
@@ -229,10 +229,10 @@ class Report extends BaseModel
     /**
      * Comparação entre dois períodos
      */
-    public function comparePeriodsReport($currentStart, $currentEnd, $previousStart, $previousEnd, $userId = null)
+    public function comparePeriodsReport($currentStart, $currentEnd, $previousStart, $previousEnd, $storeId = null)
     {
-        $current = $this->getCustomPeriodReport($currentStart, $currentEnd, $userId);
-        $previous = $this->getCustomPeriodReport($previousStart, $previousEnd, $userId);
+        $current = $this->getCustomPeriodReport($currentStart, $currentEnd, $storeId);
+        $previous = $this->getCustomPeriodReport($previousStart, $previousEnd, $storeId);
         
         return [
             'current' => $current,

@@ -52,14 +52,18 @@ class AdminController
     public function dashboard(Request $request, Response $response): Response
     {
         $userId = $_SESSION['user_id'];
+        $user = $this->userModel->getById($userId);
+        
+        // Buscar pedidos pelo store_id
+        $allOrders = $this->orderModel->getByStoreId($user['store_id']);
         
         $data = [
             'pageTitle' => 'Painel Administrativo',
-            'store' => $this->userModel->getById($userId),
+            'store' => $user,
             'totalProducts' => count($this->productModel->getAll($userId)),
             'totalCategories' => count($this->categoryModel->getAll($userId)),
-            'totalOrders' => count($this->orderModel->getByUserId($userId)),
-            'recentOrders' => array_slice($this->orderModel->getByUserId($userId), 0, 5),
+            'totalOrders' => count($allOrders),
+            'recentOrders' => array_slice($allOrders, 0, 5),
             'totalIngredients' => count($this->ingredientModel->getAll($userId))
         ];
 
@@ -164,7 +168,20 @@ class AdminController
     public function createProduct(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
-        $uploadedFiles = $request->getUploadedFiles();
+        $uploadedFiles = $request->getUploadedFiles();        
+        // Validar CSRF
+        if (!validate_csrf($data)) {
+            $_SESSION['error'] = 'Token de segurança inválido';
+            return $response->withHeader('Location', '/admin/categories')->withStatus(302);
+        }        
+        // Validar CSRF
+        if (!validate_csrf($data)) {
+            log_security_event('csrf_fail', 'CSRF token inválido em createProduct', [
+                'user_id' => $_SESSION['user_id'] ?? null
+            ]);
+            $_SESSION['error'] = 'Token de segurança inválido';
+            return $response->withHeader('Location', '/admin/products/new')->withStatus(302);
+        }
         
         try {
             // Processar upload de imagem
@@ -254,6 +271,28 @@ class AdminController
         $data = $request->getParsedBody();
         $uploadedFiles = $request->getUploadedFiles();
         
+        // Validar CSRF
+        if (!validate_csrf($data)) {
+            log_security_event('csrf_fail', 'CSRF token inválido em updateProduct', [
+                'user_id' => $_SESSION['user_id'] ?? null,
+                'product_id' => $productId
+            ]);
+            $_SESSION['error'] = 'Token de segurança inválido';
+            return $response->withHeader('Location', '/admin/products/' . $productId . '/edit')->withStatus(302);
+        }
+        
+        $product = $this->productModel->getById($productId);
+        
+        // Verificar ownership
+        if (!$product || $product['user_id'] !== $_SESSION['user_id']) {
+            log_security_event('unauthorized', 'Tentativa de editar produto de outro usuário', [
+                'user_id' => $_SESSION['user_id'] ?? null,
+                'product_id' => $productId,
+                'product_owner_id' => $product['user_id'] ?? null
+            ]);
+            return $response->withStatus(403);
+        }
+        
         try {
             // Processar upload de imagem
             if (isset($uploadedFiles['image'])) {
@@ -295,6 +334,23 @@ class AdminController
     public function deleteProduct(Request $request, Response $response, array $args): Response
     {
         $productId = (int) $args['id'];
+        $data = $request->getParsedBody();
+        
+        // Validar CSRF
+        if (!validate_csrf($data)) {
+            log_security_event('csrf_fail', 'CSRF token inválido em deleteProduct', [
+                'user_id' => $_SESSION['user_id'] ?? null,
+                'product_id' => $productId
+            ]);
+            return $response->withStatus(403);
+        }
+        
+        $product = $this->productModel->getById($productId);
+        
+        // Verificar ownership
+        if (!$product || $product['user_id'] !== $_SESSION['user_id']) {
+            return $response->withStatus(403);
+        }
         
         $this->productModel->deleteProduct($productId);
         
@@ -723,11 +779,18 @@ class AdminController
     {
         $orderId = (int) $args['id'];
         $data = $request->getParsedBody();
-        $newStatus = $data['status'] ?? '';
+        $newStatus = $data['status'] ?? 'pending';
         
         $order = $this->orderModel->getById($orderId);
-        if (!$order || $order['user_id'] !== $_SESSION['user_id']) {
+        $user = $this->userModel->getById($_SESSION['user_id']);
+        
+        if (!$order || !$user) {
             return $response->withStatus(404);
+        }
+        
+        // Verificar se o pedido pertence à loja do usuário
+        if ($order['store_id'] != $user['store_id']) {
+            return $response->withStatus(403);
         }
 
         $validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
@@ -773,10 +836,12 @@ class AdminController
     {
         $data = $request->getParsedBody();
         $userId = $_SESSION['user_id'];
+        $storeId = $_SESSION['store_id'];
         
         try {
+            
             // Validar dados obrigatórios
-            $required = ['table_number', 'customer_name', 'items'];
+            $required = ['customer_name', 'items'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     $_SESSION['error'] = 'Todos os campos obrigatórios devem ser preenchidos';
@@ -789,6 +854,17 @@ class AdminController
                 $_SESSION['error'] = 'Adicione pelo menos um item ao pedido';
                 return $response->withHeader('Location', '/admin/pedidos/novo')->withStatus(302);
             }
+
+            // Criar ou buscar cliente
+            $customerData = [
+                'store_id' => $storeId,
+                'name' => $data['customer_name'],
+                'phone' => $data['customer_phone'] ?? '',
+                'address' => $data['customer_address'] ?? '',
+                'email' => $data['customer_email'] ?? null
+            ];
+            
+            $customerId = $this->customerModel->createOrUpdate($customerData);
 
             // Calcular total
             $totalAmount = 0;
@@ -811,15 +887,17 @@ class AdminController
                 }
             }
 
-            // Criar pedido
+            // Criar pedido com store_id e customer_id
             $orderData = [
                 'user_id' => $userId,
+                'store_id' => $storeId,
+                'customer_id' => $customerId,
                 'customer_phone' => $data['customer_phone'] ?? '',
                 'customer_name' => $data['customer_name'],
-                'customer_address' => $data['customer_address'] ?? '',
-                'table_number' => $data['table_number'],
+                'customer_address' => $data['customer_address'] ?? null,
+                'table_number' => $data['table_number'] ?? null,
                 'total_amount' => $totalAmount,
-                'status' => 'pendente',
+                'status' => 'pending',
                 'order_type' => 'mesa',
                 'notes' => $data['notes'] ?? '',
                 'created_at' => date('Y-m-d H:i:s')
@@ -857,6 +935,9 @@ class AdminController
                     }
                 }
             }
+            
+            // Atualizar estatísticas do cliente
+            $this->customerModel->updateOrderStats($customerId, $totalAmount);
 
             $_SESSION['success'] = 'Pedido de mesa criado com sucesso!';
             return $response->withHeader('Location', '/admin/pedidos/' . $orderId)->withStatus(302);

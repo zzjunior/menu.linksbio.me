@@ -29,7 +29,6 @@ class Customer extends BaseModel
             // Criar novo cliente
             return $this->insert('customers', [
                 'store_id' => $data['store_id'],
-                'user_id' => $data['user_id'] ?? null,
                 'name' => $data['name'],
                 'phone' => $data['phone'],
                 'email' => $data['email'] ?? null,

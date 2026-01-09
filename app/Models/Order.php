@@ -73,6 +73,11 @@ class Order extends BaseModel
         return $this->findBy('orders', ['user_id' => $userId], 'created_at DESC');
     }
 
+    public function getByStoreId($storeId)
+    {
+        return $this->findBy('orders', ['store_id' => $storeId], 'created_at DESC');
+    }
+
     public function getById($id)
     {
         return $this->findById('orders', $id);
@@ -129,7 +134,8 @@ class Order extends BaseModel
         // Para cada item, busca os ingredientes/adicionais
         foreach ($items as &$item) {
             $sql = "
-                SELECT oii.*, i.name as ingredient_name
+                SELECT oii.id, oii.order_item_id, oii.ingredient_id, oii.quantity, 
+                       i.name as ingredient_name, i.type as type
                 FROM order_item_ingredients oii
                 JOIN ingredients i ON oii.ingredient_id = i.id
                 WHERE oii.order_item_id = ?

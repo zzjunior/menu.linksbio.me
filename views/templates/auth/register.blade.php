@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-green-600 to-blue-600 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gradient-to-br from-green-600 to-blue-600 min-h-screen flex flex-col items-center justify-center p-2">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <div class="text-center mb-6">
             <i class="fas fa-store text-4xl text-green-600 mb-2"></i>
@@ -184,5 +184,6 @@
             this.value = value;
         });
     </script>
+    @extends('layouts.footer')
 </body>
 </html>
