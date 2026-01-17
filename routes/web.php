@@ -24,10 +24,7 @@ use App\Controllers\PrintController;
 use App\Controllers\ReportController;
 use App\Controllers\StoreController;
 
-// Iniciar sessão
-session_start();
-
-// Carrega a aplicação
+// Carrega a aplicação (sessão é iniciada no bootstrap.php)
 $app = require __DIR__ . '/../config/bootstrap.php';
 
 // Configuração do container

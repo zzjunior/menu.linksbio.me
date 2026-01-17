@@ -99,13 +99,10 @@ class AuthController
         // Login bem-sucedido - limpar rate limit
         $this->sessionService->clearRateLimit($ipAddress);
         
-        // Regenerar session ID (proteção contra session fixation)
-        $this->sessionService->regenerateSession();
-        
-        // Criar sessão no banco
+        // Criar sessão no banco (já regenera o ID internamente)
         $this->sessionService->createSession($user['id'], $ipAddress, $userAgent);
         
-        // Criar sessão PHP
+        // Armazenar dados do usuário na sessão PHP
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['store_id'] = $user['store_id'];
         $_SESSION['user_name'] = $user['name'];

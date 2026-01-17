@@ -65,7 +65,7 @@ class CartController
         if (!is_array($cart)) {
             $cart = [];
         }
-        $_SESSION['cart_' . $store['store_id']] = $cart;
+        $_SESSION['cart_' . $store['id']] = $cart;
 
         $response->getBody()->write(json_encode(['success' => true]));
         return $response->withHeader('Content-Type', 'application/json')
@@ -104,7 +104,7 @@ class CartController
             return $response->withStatus(404);
         }
 
-        $cart = $_SESSION['cart_' . $store['store_id']] ?? [];
+        $cart = $_SESSION['cart_' . $store['id']] ?? [];
         $cartItems = [];
         $total = 0;
 
@@ -201,11 +201,11 @@ class CartController
             'ingredients' => $ingredients
         ];
 
-        if (!isset($_SESSION['cart_' . $store['store_id']])) {
-            $_SESSION['cart_' . $store['store_id']] = [];
+        if (!isset($_SESSION['cart_' . $store['id']])) {
+            $_SESSION['cart_' . $store['id']] = [];
         }
 
-        $_SESSION['cart_' . $store['store_id']][] = $cartItem;
+        $_SESSION['cart_' . $store['id']][] = $cartItem;
 
         return $response->withHeader('Location', '/' . $storeSlug . '/carrinho')->withStatus(302);
     }
@@ -224,9 +224,9 @@ class CartController
 
         $cartId = $args['cart_id'] ?? '';
         
-        if (isset($_SESSION['cart_' . $store['store_id']])) {
-            $_SESSION['cart_' . $store['store_id']] = array_filter(
-                $_SESSION['cart_' . $store['store_id']],
+        if (isset($_SESSION['cart_' . $store['id']])) {
+            $_SESSION['cart_' . $store['id']] = array_filter(
+                $_SESSION['cart_' . $store['id']],
                 fn($item) => $item['cart_id'] !== $cartId
             );
         }
@@ -250,7 +250,7 @@ class CartController
         $storeSettings = $this->storeSettingsModel->getSettings();
         unset($_SESSION['user_id']); // Limpar depois
 
-        $cart = $_SESSION['cart_' . $store['store_id']] ?? [];
+        $cart = $_SESSION['cart_' . $store['id']] ?? [];
         $cartItems = [];
         $total = 0;
 
@@ -311,7 +311,7 @@ class CartController
         return $response->withStatus(404);
     }
 
-    $cart = $_SESSION['cart_' . $store['store_id']] ?? [];
+    $cart = $_SESSION['cart_' . $store['id']] ?? [];
     if (empty($cart)) {
         return $response->withHeader('Location', '/' . $storeSlug . '/checkout')->withStatus(302);
     }
@@ -535,7 +535,7 @@ class CartController
         $whatsappUrl = "https://wa.me/55{$storePhone}?text=" . urlencode($whatsappMessage);
 
         // Limpar carrinho
-        unset($_SESSION['cart_' . $store['store_id']]);
+        unset($_SESSION['cart_' . $store['id']]);
         
         // Incrementar contador de rate limiting
         $attempts['count']++;

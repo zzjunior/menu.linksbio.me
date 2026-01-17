@@ -191,13 +191,13 @@
 
         // Atualizar contador do carrinho
         function updateCartCount() {
-            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
+            const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             document.getElementById('cart-count').textContent = cart.length;
         }
 
         // Adicionar produto simples ao carrinho
         function addToCart(productId, productName, price) {
-            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
+            const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             cart.push({
                 cart_id: Date.now().toString(),
                 product_id: productId,
@@ -208,7 +208,7 @@
                 notes: '',
                 size: ''
             });
-            sessionStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
+            localStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
             updateCartCount();
             
             // Feedback visual
@@ -334,7 +334,7 @@
                 ingredients[checkbox.dataset.id] = 1;
             });
 
-            const cart = JSON.parse(sessionStorage.getItem('cart_{{ $store['id'] }}') || '[]');
+            const cart = JSON.parse(localStorage.getItem('cart_{{ $store['id'] }}') || '[]');
             cart.push({
                 cart_id: Date.now().toString(),
                 product_id: currentProduct.id,
@@ -346,7 +346,7 @@
                 size: ''
             });
 
-            sessionStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
+            localStorage.setItem('cart_{{ $store['id'] }}', JSON.stringify(cart));
             updateCartCount();
             closeCustomizeModal();
             
