@@ -120,7 +120,7 @@
                                     @php
                                         $additionalTotal = 0;
                                         foreach ($item['ingredients'] as $ingredient) {
-                                            $additionalTotal += $ingredient['price'] * $ingredient['quantity'] * $item['quantity'];
+                                            $additionalTotal += ($ingredient['price'] ?? 0) * ($ingredient['quantity'] ?? 1) * ($item['quantity'] ?? 1);
                                         }
                                     @endphp
                                     @if ($additionalTotal > 0)
