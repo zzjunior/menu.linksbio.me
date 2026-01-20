@@ -51,7 +51,7 @@ if (session_status() === PHP_SESSION_NONE) {
     
     ini_set('session.cookie_httponly', '1');
     ini_set('session.cookie_secure', $isHttps ? '1' : '0'); // Só HTTPS se disponível
-    ini_set('session.cookie_samesite', 'Strict');
+    ini_set('session.cookie_samesite', 'None'); // Ajustar conforme necessário: Lax, Strict, None
     ini_set('session.use_strict_mode', '1');
     ini_set('session.cookie_lifetime', '0');
     ini_set('session.gc_maxlifetime', '3600');
@@ -62,7 +62,7 @@ if (session_status() === PHP_SESSION_NONE) {
         'domain' => '',
         'secure' => $isHttps,
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'None'
     ]);
     
     session_start();
