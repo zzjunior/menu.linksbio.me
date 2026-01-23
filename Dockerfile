@@ -10,8 +10,16 @@ RUN apt-get update && apt-get install -y libonig-dev \
 # Habilite o mod_rewrite do Apache
 RUN a2enmod rewrite
 
-# Copie os arquivos do projeto para o diretório padrão do Apache
-COPY . /var/www/html/
+
+# Copie apenas as pastas e arquivos necessários para o diretório padrão do Apache
+COPY app/ /var/www/html/app/
+COPY public/ /var/www/html/public/
+COPY config/ /var/www/html/config/
+COPY routes/ /var/www/html/routes/
+COPY views/ /var/www/html/views/
+COPY vendor/ /var/www/html/vendor/
+COPY composer.json /var/www/html/
+COPY composer.lock /var/www/html/
 
 # Defina permissões para o diretório
 RUN chown -R www-data:www-data /var/www/html
