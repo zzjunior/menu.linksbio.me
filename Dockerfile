@@ -11,15 +11,22 @@ RUN apt-get update && apt-get install -y libonig-dev \
 RUN a2enmod rewrite
 
 
+
 # Copie apenas as pastas e arquivos necessários para o diretório padrão do Apache
 COPY app/ /var/www/html/app/
 COPY public/ /var/www/html/public/
 COPY config/ /var/www/html/config/
 COPY routes/ /var/www/html/routes/
 COPY views/ /var/www/html/views/
-COPY vendor/ /var/www/html/vendor/
 COPY composer.json /var/www/html/
 COPY composer.lock /var/www/html/
+
+# Instale as dependências PHP dentro do container
+WORKDIR /var/www/html
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+	&& php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+	&& rm composer-setup.php \
+	&& composer install --no-dev --optimize-autoloader
 
 # Defina permissões para o diretório
 RUN chown -R www-data:www-data /var/www/html
