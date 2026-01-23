@@ -2,8 +2,10 @@
 # Use a imagem oficial do PHP com Apache
 FROM php:8.2-apache
 
-# Instale dependências do sistema necessárias para mbstring
-RUN apt-get update && apt-get install -y libonig-dev \
+
+# Instale dependências do sistema necessárias para mbstring, composer e instalação de pacotes
+RUN apt-get update \
+	&& apt-get install -y libonig-dev zip unzip git \
 	&& docker-php-ext-install pdo pdo_mysql mbstring \
 	&& apt-get clean && rm -rf /var/lib/apt/lists/*
 
