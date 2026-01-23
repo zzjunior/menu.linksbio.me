@@ -1,0 +1,29 @@
+# Ignora arquivos e pastas que não devem ir para a imagem Docker
+.env
+.env.*
+.git
+.gitignore
+docker-compose.yml
+Dockerfile
+README.md
+LICENSE
+test/
+database/
+storage/
+*.log
+*.md
+*.sql
+*.sh
+*.bat
+*.ps1
+*.zip
+*.tar
+*.gz
+*.rar
+node_modules/
+vendor/
+# Não copie configs do Apache
+*.conf
+*.htaccess
+# Ignora uploads locais
+public/uploads/
