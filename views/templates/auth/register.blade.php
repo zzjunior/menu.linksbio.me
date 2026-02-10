@@ -30,7 +30,7 @@
         @endif
 
         <form method="POST" action="/admin/register" class="space-y-4">
-            @csrf
+            <input type="hidden" name="csrf_token" value="{{ $csrf_token }}">
             <div class="grid grid-cols-1 gap-4">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">

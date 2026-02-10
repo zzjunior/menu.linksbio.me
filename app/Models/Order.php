@@ -78,6 +78,72 @@ class Order extends BaseModel
         return $this->findBy('orders', ['store_id' => $storeId], 'created_at DESC');
     }
 
+    /**
+     * Buscar pedidos por loja e telefone do cliente
+     */
+    public function getByStoreIdAndPhone($storeId, $customerPhone)
+    {
+        $sql = "SELECT * FROM orders WHERE store_id = ? AND customer_phone = ? ORDER BY created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$storeId, $customerPhone]);
+        return $result->fetchAllAssociative();
+    }
+
+    /**
+     * Buscar pedidos por loja e telefone normalizado (sem caracteres especiais)
+     */
+    public function getByStoreIdAndPhoneNormalized($storeId, $normalizedPhone)
+    {
+        // Buscar todos os pedidos da loja e filtrar por telefone normalizado
+        $sql = "SELECT * FROM orders WHERE store_id = ? ORDER BY created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$storeId]);
+        $orders = $result->fetchAllAssociative();
+        
+        $matchingOrders = [];
+        foreach ($orders as $order) {
+            $orderPhoneNormalized = preg_replace('/[^0-9]/', '', $order['customer_phone']);
+            if ($orderPhoneNormalized === $normalizedPhone) {
+                $matchingOrders[] = $order;
+            }
+        }
+        
+        return $matchingOrders;
+    }
+
+    /**
+     * Verificar se existe pedidos para uma loja e telefone
+     */
+    public function hasOrdersByStoreAndPhone($storeId, $customerPhone)
+    {
+        $sql = "SELECT COUNT(*) as count FROM orders WHERE store_id = ? AND customer_phone = ?";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$storeId, $customerPhone]);
+        $row = $result->fetchAssociative();
+        return (int)$row['count'] > 0;
+    }
+
+    /**
+     * Verificar se existe pedidos para uma loja e telefone normalizado
+     */
+    public function hasOrdersByStoreAndPhoneNormalized($storeId, $normalizedPhone)
+    {
+        // Buscar todos os pedidos da loja e verificar se algum tem telefone normalizado correspondente
+        $sql = "SELECT customer_phone FROM orders WHERE store_id = ?";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$storeId]);
+        $orders = $result->fetchAllAssociative();
+        
+        foreach ($orders as $order) {
+            $orderPhoneNormalized = preg_replace('/[^0-9]/', '', $order['customer_phone']);
+            if ($orderPhoneNormalized === $normalizedPhone) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     public function getById($id)
     {
         return $this->findById('orders', $id);

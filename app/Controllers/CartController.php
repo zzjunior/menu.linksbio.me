@@ -469,7 +469,7 @@ class CartController
         $storeName = $store['store_name'];
         $estimate = '10 - 30 minutos';
         $orderUrl = "https://menu.linksbio.me/order/{$storeSlug}";
-        $repeatUrl = "https://menu.linksbio.me/querodenovo/" . $orderNumber;
+        $repeatUrl = "https://menu.linksbio.me/querodenovo/{$storeSlug}/{$orderNumber}"; // nova rota para repetir o pedido
         $orderTypeText = $orderType === 'delivery' ? 'Delivery' : 'Retirada Balcão';
         $deliveryFee = $orderType === 'delivery' ? floatval($storeSettings['delivery_fee'] ?? 0.00) : 0.00;
         $discount = 0.00;
