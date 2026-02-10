@@ -60,7 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     </script>
 </head>
-<body class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen font-sans">
+<body class="bg-gradient-to-br from-purple-50 to-blue-50 font-sans">
+
     <!-- Header Moderno -->
 <header id="mainHeader" class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
     @if(!empty($store['store_banner']))
@@ -157,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 
 <!-- Status da Loja (Aberto/Fechado) -->
-<div id="storeStatusBanner" class="sticky top-16 z-40 transition-all duration-300">
+<div id="storeStatusBanner" class="sticky top-0 z-40 transition-all duration-300">
     @if(!$storeStatus['is_open'])
         <!-- Loja Fechada - Banner vermelho -->
         <div class="bg-red-600 text-white py-3 px-4 shadow-md">
@@ -185,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Filtros de Categoria - Design Moderno -->
 @if (!empty($categories))
-    <div class="bg-white shadow-sm sticky top-20 z-40 transition-all duration-300 border-b border-gray-100">
+    <div class="bg-white shadow-sm sticky top-8 z-30 transition-all duration-300 border-b border-gray-100" id="categoryNav">
         <div class="container mx-auto px-4 py-4">
             <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
                 <a href="/{{ $store_slug }}" 
@@ -206,29 +207,11 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 @endif
 
-<script>
-    // Header responsivo - esconde/mostra ao rolar
-    let lastScroll = 0;
-    const header = document.getElementById('mainHeader');
-    
-    if (header) {
-        window.addEventListener('scroll', function() {
-            const currentScroll = window.pageYOffset;
-            
-            if (currentScroll > lastScroll && currentScroll > 100) {
-                // Rolando para baixo - esconde header
-                header.style.transform = 'translateY(-100%)';
-            } else {
-                // Rolando para cima - mostra header  
-                header.style.transform = 'translateY(0)';
-            }
-            lastScroll = currentScroll;
-        });
-    }
-</script>
+
 
     <!-- Produtos - Layout Moderno iFood Style -->
-    <main class="container mx-auto px-4 pb-6 pt-4">
+    <main class="bg-gradient-to-br from-purple-50 to-blue-50 min-h-screen">
+        <div class="container mx-auto px-4 pb-20 pt-4">
         @if (empty($products))
             <div class="text-center py-16">
                 <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
@@ -293,8 +276,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <button onclick="openCustomizeModal({{ $product['id'] }})" 
                                                 class="px-4 py-2 md:px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-medium text-xs md:text-sm hover:from-primary/90 hover:to-secondary/90 transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg btn-modern flex-shrink-0">
                                             @if ($hasCustomization)
-                                                <i class="fas fa-cog text-xs"></i>
-                                                <span class="hidden sm:inline">Montar</span>
+                                                 <i class="fas fa-plus text-xs"></i>
+                                                <span class="hidden sm:inline">Adicionar</span>
                                                 <span class="sm:hidden">+</span>
                                             @else
                                                 <i class="fas fa-plus text-xs"></i>
@@ -330,12 +313,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 @endforeach
             </div>
         @endif
+        </div>
     </main>
 
 <!-- Modal de Personalização - Design Moderno -->
 <div id="customizeModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
     <div class="flex items-end justify-center w-full h-full p-0 md:items-center md:p-4">
-        <div class="bg-white w-full h-full md:max-w-lg md:max-h-[90vh] md:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="bg-white w-full h-full md:w-auto md:h-auto md:max-w-2xl md:max-h-[80vh] lg:max-w-3xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
             <!-- Header Moderno -->
             <div class="p-4 md:p-6 border-b border-gray-100 flex-shrink-0 bg-gradient-to-r from-primary/5 to-secondary/5">
                 <div class="flex justify-between items-center">
@@ -351,22 +335,23 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             
             <!-- Conteúdo com Scroll -->
-            <form id="customizeForm" class="flex-1 overflow-y-auto min-h-0">
-                <div class="p-4 md:p-6 space-y-4 md:space-y-6" id="modalContent">
-                    <!-- Conteúdo será preenchido via JavaScript -->
-                </div>
-            </form>
+            <div class="flex-1 overflow-y-auto" style="max-height: calc(80vh - 30px);"> {{-- controle a distancia/tamanho do footer --}}
+                <form id="customizeForm" class="h-full">
+                    <div class="p-2" id="modalContent">
+                        <!-- Conteúdo será preenchido via JavaScript -->
+                    </div>
+                </form>
+            </div>
             
-            <!-- Footer Fixo -->
-            <div class="p-4 md:p-6 border-t border-gray-100 bg-white flex-shrink-0 z-10">
-                <div class="flex justify-between items-center mb-3 md:mb-4">
+            <!-- Footer Fixo - sempre visível -->
+            <div class="px-3 md:p-4 border-t border-gray-100 bg-white flex-shrink-0">
+                <div class="flex justify-between items-center">
                     <span class="text-base md:text-lg font-semibold text-gray-900">Total:</span>
                     <span class="text-xl md:text-2xl font-bold text-primary" id="totalPrice">R$ 0,00</span>
                 </div>
                 <button type="button" onclick="addCustomizedToCart()" 
-                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 md:py-4 px-4 md:px-6 rounded-xl md:rounded-2xl font-semibold text-base md:text-lg hover:from-primary/90 hover:to-secondary/90 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 md:gap-3">
-                    <i class="fas fa-shopping-cart"></i>
-                    Adicionar ao carrinho
+                        class="w-full bg-gradient-to-r from-primary to-secondary text-white py-2.5 px-3 md:px-6 rounded-xl md:rounded-2xl font-semibold text-base md:text-lg hover:from-primary/90 hover:to-secondary/90 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center">
+                    Finalizar 
                     <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -533,29 +518,33 @@ function renderModalContent(hasCustomization = true) {
                                     ${type.charAt(0).toUpperCase() + type.slice(1)}
                                     ${maxPorTipo ? `<span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full ml-2">Máx: ${maxPorTipo}</span>` : ''}
                                 </h5>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">`;
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
                         product.ingredients[type].forEach(ingredient => {
                             if (ingredient && ingredient.id) {
                                 const img = ingredient.image_url || '/assets/images/ingredients/default.jpg';
                                 const price = ingredient.additional_price > 0 ? `<span class="text-green-600 text-xs font-semibold mt-1">+R$ ${parseFloat(ingredient.additional_price).toFixed(2).replace('.', ',')}</span>` : '';
                                 content += `
-                                    <div class="bg-gray-50 hover:bg-gray-100 rounded-2xl p-4 transition-colors">
-                                        <div class="text-center mb-3">
-                                            <div class="w-16 h-16 mx-auto mb-2 bg-white rounded-xl overflow-hidden shadow-sm">
-                                                <img src="${img}" alt="${ingredient.name}" class="w-full h-full object-cover">
+                                    <div class="bg-gray-50 hover:bg-gray-100 rounded-2xl p-4 transition-colors border border-gray-200">
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                                                <div class="w-12 h-12 bg-white rounded-lg overflow-hidden shadow-sm flex-shrink-0">
+                                                    <img src="${img}" alt="${ingredient.name}" class="w-full h-full object-cover">
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <span class="text-sm font-medium text-gray-900 block truncate">${ingredient.name}</span>
+                                                    ${price}
+                                                </div>
                                             </div>
-                                            <span class="text-sm font-medium text-gray-900 block">${ingredient.name}</span>
-                                            ${price}
-                                        </div>
-                                        <div class="flex justify-center">
-                                            ${renderModernStepper(
-                                                `ingredient-qty-${ingredient.id}-unit${i}`,
-                                                selectedIngredients[i] && selectedIngredients[i][ingredient.id] ? selectedIngredients[i][ingredient.id].qty : 0,
-                                                0,
-                                                10,
-                                                `changeIngredientQty(${i},'${ingredient.id}', -1, '${type}')`,
-                                                `changeIngredientQty(${i},'${ingredient.id}', 1, '${type}')`
-                                            )}
+                                            <div class="flex-shrink-0">
+                                                ${renderModernStepper(
+                                                    `ingredient-qty-${ingredient.id}-unit${i}`,
+                                                    selectedIngredients[i] && selectedIngredients[i][ingredient.id] ? selectedIngredients[i][ingredient.id].qty : 0,
+                                                    0,
+                                                    10,
+                                                    `changeIngredientQty(${i},'${ingredient.id}', -1, '${type}')`,
+                                                    `changeIngredientQty(${i},'${ingredient.id}', 1, '${type}')`
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 `;
@@ -606,15 +595,15 @@ function renderModernStepper(id, value, min, max, onMinus, onPlus) {
     const canIncrease = value < max;
     
     return `
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
             <button type="button" 
-                    class="w-10 h-10 ${canDecrease ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-gray-50 text-gray-300 cursor-not-allowed'} rounded-xl flex items-center justify-center transition-all duration-200 font-bold text-lg" 
+                    class="w-8 h-8 ${canDecrease ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-gray-50 text-gray-300 cursor-not-allowed'} rounded-lg flex items-center justify-center transition-all duration-200 font-bold text-sm" 
                     onclick="${canDecrease ? onMinus : ''}" ${!canDecrease ? 'disabled' : ''}>
                 -
             </button>
-            <span id="${id}" class="w-12 text-center font-bold text-lg text-gray-900">${value}</span>
+            <span id="${id}" class="w-8 text-center font-bold text-sm text-gray-900">${value}</span>
             <button type="button" 
-                    class="w-10 h-10 ${canIncrease ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-xl flex items-center justify-center transition-all duration-200 font-bold text-lg" 
+                    class="w-8 h-8 ${canIncrease ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} rounded-lg flex items-center justify-center transition-all duration-200 font-bold text-sm" 
                     onclick="${canIncrease ? onPlus : ''}" ${!canIncrease ? 'disabled' : ''}>
                 +
             </button>
