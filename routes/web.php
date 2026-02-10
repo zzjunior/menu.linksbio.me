@@ -287,7 +287,12 @@ $app->group('/{store}', function ($group) {
 
 // Rotas de acompanhamento de pedido (fora do grupo para não conflitar)
 $app->get('/order/{store}', [OrderController::class, 'trackOrder']);
-$app->get('/querodenovo/{id}', [OrderController::class, 'repeatOrder']);
+$app->post('/order/{store}/validate-phone', [OrderController::class, 'validateCustomerPhone']);
+$app->get('/order/{store}/logout', [OrderController::class, 'clearCustomerPhone']);
+
+// Rotas para repetir pedido com verificação de cliente
+$app->get('/querodenovo/{store}/{id}', [OrderController::class, 'repeatOrderForm']);
+$app->post('/querodenovo/{store}/{id}/confirmar', [OrderController::class, 'repeatOrderConfirm']);
 
 
 //** === ROTA PRINTPEDIDO

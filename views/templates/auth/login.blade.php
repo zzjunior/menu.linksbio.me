@@ -24,7 +24,7 @@
         @endif
 
         <form method="POST" action="/admin/login" class="space-y-4">
-            @csrf
+            <input type="hidden" name="csrf_token" value="{{ $csrf_token }}">
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
                     <i class="fas fa-envelope mr-1"></i>

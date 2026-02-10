@@ -44,9 +44,15 @@ class AuthController
             return $response->withHeader('Location', '/admin')->withStatus(302);
         }
         
+        // Gerar token CSRF
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        
         $data = [
             'title' => 'Login - Admin',
-            'error' => $_SESSION['error'] ?? null
+            'error' => $_SESSION['error'] ?? null,
+            'csrf_token' => $_SESSION['csrf_token']
         ];
         
         unset($_SESSION['error']);
@@ -64,6 +70,9 @@ class AuthController
         $password = $data['password'] ?? '';
         $csrfToken = $data['csrf_token'] ?? '';
         
+        // Debug temporário
+        error_log("LOGIN DEBUG: email=$email, csrf_token_sent=$csrfToken, csrf_token_session=" . ($_SESSION['csrf_token'] ?? 'null'));
+        
         // Obter IP e User-Agent
         $serverParams = $request->getServerParams();
         $ipAddress = $serverParams['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -71,6 +80,7 @@ class AuthController
 
         // Validar CSRF
         if (empty($csrfToken) || $csrfToken !== ($_SESSION['csrf_token'] ?? '')) {
+            error_log("LOGIN ERROR: CSRF token mismatch");
             $_SESSION['error'] = 'Requisição inválida. Tente novamente.';
             return $response->withHeader('Location', '/admin/login')->withStatus(302);
         }
@@ -153,10 +163,16 @@ class AuthController
             return $response->withHeader('Location', '/admin')->withStatus(302);
         }
         
+        // Gerar token CSRF
+        if (!isset($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        
         $data = [
             'title' => 'Cadastro - Nova Loja',
             'error' => $_SESSION['error'] ?? null,
-            'success' => $_SESSION['success'] ?? null
+            'success' => $_SESSION['success'] ?? null,
+            'csrf_token' => $_SESSION['csrf_token']
         ];
         
         unset($_SESSION['error'], $_SESSION['success']);
@@ -170,6 +186,13 @@ class AuthController
     public function register(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
+        $csrfToken = $data['csrf_token'] ?? '';
+        
+        // Validar CSRF
+        if (empty($csrfToken) || $csrfToken !== ($_SESSION['csrf_token'] ?? '')) {
+            $_SESSION['error'] = 'Requisição inválida. Tente novamente.';
+            return $response->withHeader('Location', '/admin/register')->withStatus(302);
+        }
         
         $required = ['name', 'email', 'password', 'confirm_password', 'store_name', 'whatsapp'];
         foreach ($required as $field) {
