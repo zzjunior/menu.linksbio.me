@@ -118,6 +118,7 @@ class AuthController
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['store_name'] = $user['store_name'];
         $_SESSION['store_slug'] = $user['store_slug'];
+        $_SESSION['store_logo'] = $user['logo'] ?? $user['store_logo'] ?? null;
         $_SESSION['ip_address'] = $ipAddress;
         $_SESSION['user_agent'] = $userAgent;
 

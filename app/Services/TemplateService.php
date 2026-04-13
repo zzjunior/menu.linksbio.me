@@ -18,8 +18,26 @@ class TemplateService
         $this->blade = new BladeInstance($views, $cache);
     }
 
+    /**
+     * Resolve store data for the sidebar from session.
+     * Called automatically on every render so the layout always has $storeSettings.
+     */
+    private function resolveStoreSettings(): array
+    {
+        return [
+            'store_name'  => $_SESSION['store_name']  ?? 'Minha Loja',
+            'store_slug'  => $_SESSION['store_slug']  ?? '',
+            'store_logo'  => $_SESSION['store_logo']  ?? null,
+            'user_name'   => $_SESSION['user_name']   ?? '',
+        ];
+    }
+
     public function render(string $template, array $data = []): string
     {
+        // Auto-inject storeSettings unless caller already set it
+        if (!array_key_exists('storeSettings', $data)) {
+            $data['storeSettings'] = $this->resolveStoreSettings();
+        }
         return $this->blade->render($template, $data);
     }
 

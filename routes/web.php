@@ -188,7 +188,7 @@ $app->get('/admin/', function ($request, $response) {
 });
 
 // === ROTAS ADMIN (protegidas) ===
-$app->group('/admin', function ($group) {
+$app->group('/admin', function ($group) use ($container) {
         // Clientes
         $group->get('/clientes', [AdminController::class, 'listCustomers']);
     $group->get('', [AdminController::class, 'dashboard']);
@@ -226,6 +226,33 @@ $app->group('/admin', function ($group) {
     $group->post('/pedidos/novo', [AdminController::class, 'createTableOrder']);
     $group->post('/pedidos/{id}/status', [AdminController::class, 'updateOrderStatus']);
     $group->get('/pedidos/{id}', [OrderController::class, 'viewOrder']);
+
+    // API JSON para o Kanban do Dashboard
+    $group->get('/api/orders', function (Request $request, Response $response) use ($container) {
+        $userId = $_SESSION['user_id'];
+        $userModel = $container->get(User::class);
+        $user = $userModel->getById($userId);
+        $storeId = $user['store_id'] ?? null;
+
+        $orderModel = $container->get(Order::class);
+        $sql = "
+            SELECT o.id, o.customer_name, o.customer_phone, o.customer_address,
+                   o.status, o.total_amount, o.notes, o.created_at,
+                   COUNT(oi.id) as items_count
+            FROM orders o
+            LEFT JOIN order_items oi ON o.id = oi.order_id
+            WHERE o.store_id = ?
+            GROUP BY o.id
+            ORDER BY o.created_at DESC
+            LIMIT 200
+        ";
+        $stmt = $orderModel->getConnection()->prepare($sql);
+        $result = $stmt->executeQuery([$storeId]);
+        $orders = $result->fetchAllAssociative();
+
+        $response->getBody()->write(json_encode(['orders' => $orders]));
+        return $response->withHeader('Content-Type', 'application/json');
+    });
     
     // Relatórios Financeiros
     $group->get('/relatorios', [ReportController::class, 'dashboard']);

@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pageTitle }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                    <a href="/admin/products" class="text-gray-500 hover:text-gray-700">← Voltar</a>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ $pageTitle }}</h1>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-3xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+@extends('layouts.admin')
+@section('title', $pageTitle)
+@section('content')
+<div class="max-w-3xl">
         @if (isset($error))
             <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
                 <div class="flex">
@@ -260,36 +242,26 @@
                 </div>
             </form>
         </div>
-    </main>
+    </div>
+@endsection
 
-    <script>
-        function previewImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    document.getElementById('previewImg').src = e.target.result;
-                    document.getElementById('imagePreview').classList.remove('hidden');
-                };
-                
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        // Limpar URL quando arquivo é selecionado
-        document.getElementById('image').addEventListener('change', function() {
-            if (this.files.length > 0) {
-                document.getElementById('image_url').value = '';
-            }
-        });
-
-        // Limpar arquivo quando URL é preenchida
-        document.getElementById('image_url').addEventListener('input', function() {
-            if (this.value.trim() !== '') {
-                document.getElementById('image').value = '';
-                document.getElementById('imagePreview').classList.add('hidden');
-            }
-        });
-    </script>
-</body>
-</html>
+@section('scripts')
+<script>
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+document.getElementById('image')?.addEventListener('change', function() {
+    if (this.files.length > 0) document.getElementById('image_url').value = '';
+});
+document.getElementById('image_url')?.addEventListener('input', function() {
+    if (this.value.trim()) { document.getElementById('image').value = ''; document.getElementById('imagePreview').classList.add('hidden'); }
+});
+</script>
+@endsection

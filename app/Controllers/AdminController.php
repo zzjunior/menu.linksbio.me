@@ -53,18 +53,22 @@ class AdminController
     {
         $userId = $_SESSION['user_id'];
         $user = $this->userModel->getById($userId);
-        
+
+        // Keep store_logo in session current (needed by universal sidebar layout)
+        $_SESSION['store_logo'] = $user['logo'] ?? $user['store_logo'] ?? $_SESSION['store_logo'] ?? null;
+
         // Buscar pedidos pelo store_id
         $allOrders = $this->orderModel->getByStoreId($user['store_id']);
-        
+
         $data = [
-            'pageTitle' => 'Painel Administrativo',
-            'store' => $user,
-            'totalProducts' => count($this->productModel->getAll($userId)),
-            'totalCategories' => count($this->categoryModel->getAll($userId)),
-            'totalOrders' => count($allOrders),
-            'recentOrders' => array_slice($allOrders, 0, 5),
-            'totalIngredients' => count($this->ingredientModel->getAll($userId))
+            'pageTitle'      => 'Painel Administrativo',
+            'store'          => $user,
+            'storeSettings'  => $user, // Makes logo/name available to layout via $storeSettings
+            'totalProducts'  => count($this->productModel->getAll($userId)),
+            'totalCategories'=> count($this->categoryModel->getAll($userId)),
+            'totalOrders'    => count($allOrders),
+            'recentOrders'   => array_slice($allOrders, 0, 5),
+            'totalIngredients'=> count($this->ingredientModel->getAll($userId))
         ];
 
         return $this->templateService->renderResponse($response, 'admin.dashboard', $data);
@@ -778,28 +782,46 @@ class AdminController
     public function updateOrderStatus(Request $request, Response $response, array $args): Response
     {
         $orderId = (int) $args['id'];
-        $data = $request->getParsedBody();
+
+        // Suporta JSON (kanban drag & drop) e form POST (lista)
+        $contentType = $request->getHeaderLine('Content-Type');
+        if (strpos($contentType, 'application/json') !== false) {
+            $body = (string) $request->getBody();
+            $data = json_decode($body, true) ?? [];
+        } else {
+            $data = $request->getParsedBody() ?? [];
+        }
+
         $newStatus = $data['status'] ?? 'pending';
-        
+
         $order = $this->orderModel->getById($orderId);
         $user = $this->userModel->getById($_SESSION['user_id']);
-        
+
         if (!$order || !$user) {
-            return $response->withStatus(404);
+            $response->getBody()->write(json_encode(['error' => 'Not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
         }
-        
+
         // Verificar se o pedido pertence à loja do usuário
         if ($order['store_id'] != $user['store_id']) {
-            return $response->withStatus(403);
+            $response->getBody()->write(json_encode(['error' => 'Forbidden']));
+            return $response->withStatus(403)->withHeader('Content-Type', 'application/json');
         }
 
         $validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
         if (!in_array($newStatus, $validStatuses)) {
-            return $response->withStatus(400);
+            $response->getBody()->write(json_encode(['error' => 'Invalid status']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
         $this->orderModel->updateStatus($orderId, $newStatus);
-        
+
+        // Se for requisição AJAX/JSON, retornar JSON 200
+        if (strpos($contentType, 'application/json') !== false || $request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
+            $response->getBody()->write(json_encode(['success' => true, 'status' => $newStatus]));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        }
+
         return $response->withHeader('Location', '/admin/pedidos')->withStatus(302);
     }
 
