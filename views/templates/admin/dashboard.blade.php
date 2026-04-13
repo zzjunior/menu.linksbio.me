@@ -1,451 +1,400 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pageTitle }}</title>
-    <script src="https://cdn.tailwindcss.com">
-    <a href="/admin/pedidos" 
-                       class="block p-6 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">📋</div>
-                            <h4 class="text-lg font-medium text-orange-900">Pedidos</h4>
-                            <p class="text-sm text-orange-700">Gerenciar pedidos da loja</p>
-                        </div>
-                    </a>
-                    </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/rsvp/4.8.5/rsvp.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.5/qz-tray.min.js"></script>
-</head>
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <!-- Store Info -->
-                <div class="flex items-center space-x-3">
-                    @if (!empty($store['logo']))
-                        <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 w-10 rounded img-fluid shadow">
-                    @endif
-                    <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">{{ $store['store_name'] }}</h1>
-                        <p class="text-gray-600 text-sm md:text-base">Painel Administrativo</p>
-                    </div>
-                </div>
-                {{---Logo upload & Actions---}}
-                <div class="hidden md:flex items-center space-x-6">
-                    {{--<form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
-                        <label for="logo-upload" class="bg-blue-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-blue-700 text-sm flex items-center">
-                            <i class="fas fa-upload mr-1"></i>
-                            <span>Atualizar Logo</span>
-                        </label>
-                        <input type="file" id="logo-upload" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
-                    </form> --}}
-                    <a href="/{{ $store['store_slug'] }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
-                        <i class="fas fa-external-link-alt mr-1"></i>
-                        <span>Ver Cardápio</span>
-                    </a>
-                    <a href="/admin/loja/configuracoes" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
-                        <i class="fas fa-cog mr-1"></i>
-                        <span>Configurações</span>
-                    </a>
-                    <a href="/admin/logout" class="text-red-600 hover:text-red-800 text-sm flex items-center">
-                        <i class="fas fa-sign-out-alt mr-1"></i>
-                        <span>Sair</span>
-                    </a>
-                </div>
-                <!-- Botão do menu mobile à direita -->
-                <button id="menu-toggle" class="md:hidden text-gray-700 focus:outline-none ml-2">
-                    <i class="fas fa-bars text-2xl"></i>
-                </button>
-            </div>
+@extends('layouts.admin')
+
+@section('title', 'Dashboard')
+
+@section('head')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+@endsection
+
+@section('topbar-actions')
+<div class="hidden sm:flex items-center gap-2 text-xs text-slate-500">
+    <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" style="animation:pulse 2s infinite;"></span>
+    Kanban ao vivo
+</div>
+<a href="/admin/pedidos/novo"
+   class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+    <i class="fas fa-plus text-xs"></i>
+    <span class="hidden sm:inline">Novo Pedido</span>
+</a>
+@endsection
+
+@section('content')
+<style>
+    /* ── STAT CARDS ── */
+    .stat-card {
+        background:#fff; border-radius:16px; padding:20px 22px;
+        box-shadow:0 1px 4px rgba(0,0,0,.06);
+        display:flex; align-items:center; gap:16px;
+        transition:transform .2s,box-shadow .2s;
+    }
+    .stat-card:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(0,0,0,.08); }
+    .stat-icon { width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0; }
+
+    /* ── TABS ── */
+    .tab-btn {
+        padding:9px 18px; border-radius:10px; font-weight:600; font-size:13px;
+        color:#64748b; cursor:pointer; border:none; background:transparent;
+        display:flex; align-items:center; gap:6px; transition:all .18s;
+    }
+    .tab-btn.active,.tab-btn:hover { background:#fff; color:#6366f1; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+
+    /* ── KANBAN ── */
+    .kanban-col { background:#fff; border-radius:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); display:flex; flex-direction:column; }
+    .kanban-col-hdr { padding:12px 14px 10px; border-radius:16px 16px 0 0; display:flex; align-items:center; justify-content:space-between; }
+    .kanban-zone { padding:10px; flex:1; min-height:380px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; max-height:60vh; }
+    .kanban-zone::-webkit-scrollbar { width:4px; }
+    .kanban-zone::-webkit-scrollbar-track { background:transparent; }
+    .kanban-zone::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:4px; }
+
+    .k-card {
+        background:#fff; border:1.5px solid #e2e8f0; border-radius:12px;
+        padding:11px 12px; cursor:move;
+        transition:transform .15s,box-shadow .15s,border-color .15s;
+        position:relative; overflow:hidden;
+    }
+    .k-card:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(0,0,0,.1); border-color:#c7d2fe; }
+    .k-card .sbar { position:absolute; left:0;top:0;bottom:0;width:3px; }
+    .ghost-card { opacity:.35; background:#e0e7ff !important; border:2px dashed #6366f1 !important; }
+
+    /* Order rows */
+    .order-row { display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9; }
+    .order-row:last-child { border:none; }
+
+    @media (max-width:900px) {
+        .kanban-grid { overflow-x:auto; padding-bottom:12px; }
+        .kanban-cols { min-width:860px; }
+    }
+</style>
+
+<!-- ── STATS ── -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+            <i class="fas fa-box-open text-white text-xl"></i>
         </div>
-        <!-- Offcanvas Mobile Menu (Direita) -->
-        <div id="offcanvas-menu" class="fixed inset-0 z-50 bg-black bg-opacity-40 hidden">
-            <div class="fixed right-0 top-0 h-full w-64 bg-white shadow-lg p-6 flex flex-col space-y-6">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="font-bold text-lg">{{ $store['store_name'] }}</span>
-                    <button id="menu-close" class="text-gray-700 focus:outline-none">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <form action="/admin/upload-logo" method="post" enctype="multipart/form-data" class="flex items-center space-x-2">
-                    <label for="logo-upload-mobile" class="bg-blue-600 text-white px-3 py-2 rounded cursor-pointer hover:bg-blue-700 text-sm flex items-center">
-                        <i class="fas fa-upload mr-1"></i>
-                        <span>Atualizar Logo</span>
-                    </label>
-                    <input type="file" id="logo-upload-mobile" name="logo" accept="image/*" class="hidden" onchange="this.form.submit()">
-                </form>
-                @if (!empty($store['logo']))
-                    <img src="{{ $store['logo'] }}" alt="Logo da loja" class="h-10 w-10 rounded img-fluid shadow">
-                @endif
-                <a href="/{{ $store['store_slug'] }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
-                    <i class="fas fa-external-link-alt mr-1"></i>
-                    <span>Ver Cardápio</span>
-                </a>
-                <a href="/admin/loja/configuracoes" class="text-gray-600 hover:text-gray-800 text-sm flex items-center">
-                    <i class="fas fa-cog mr-1"></i>
-                    <span>Configurações</span>
-                </a>
-                <a href="/admin/logout" class="text-red-600 hover:text-red-800 text-sm flex items-center">
-                    <i class="fas fa-sign-out-alt mr-1"></i>
-                    <span>Sair</span>
-                </a>
-            </div>
+        <div>
+            <div class="text-2xl font-bold text-slate-800">{{ $totalProducts }}</div>
+            <div class="text-xs text-slate-500 mt-0.5 font-medium">Produtos</div>
         </div>
-        <script>
-            const menuToggle = document.getElementById('menu-toggle');
-            const offcanvasMenu = document.getElementById('offcanvas-menu');
-            const menuClose = document.getElementById('menu-close');
-            menuToggle?.addEventListener('click', () => {
-                offcanvasMenu.classList.remove('hidden');
-            });
-            menuClose?.addEventListener('click', () => {
-                offcanvasMenu.classList.add('hidden');
-            });
-            offcanvasMenu?.addEventListener('click', (e) => {
-                if (e.target === offcanvasMenu) offcanvasMenu.classList.add('hidden');
-            });
-        </script>
-    </header>
-
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Cards de Estatísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-boxes text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Total de Produtos
-                                </dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ $totalProducts }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                <span class="text-white text-sm">🗂️</span>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Categorias
-                                </dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ $totalCategories }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                                <span class="text-white text-sm">🥝</span>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Ingredientes
-                                </dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ $totalIngredients }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-receipt text-white"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">
-                                    Total de Pedidos
-                                </dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    {{ $totalOrders }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#10b981,#059669)">
+            <i class="fas fa-tags text-white text-xl"></i>
         </div>
-
-        <!-- Menu de Navegação -->
-        <div class="bg-white shadow rounded-lg">
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-                    Gerenciamento
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <a href="/admin/products" 
-                       class="block p-6 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">📦</div>
-                            <h4 class="text-lg font-medium text-blue-900">Produtos</h4>
-                            <p class="text-sm text-blue-700">Gerenciar itens do cardápio</p>
-                        </div>
-                    </a>
-
-                    <a href="/admin/categories" 
-                       class="block p-6 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">🗂️</div>
-                            <h4 class="text-lg font-medium text-green-900">Categorias</h4>
-                            <p class="text-sm text-green-700">Organizar produtos por tipo</p>
-                        </div>
-                    </a>
-
-                    <a href="/admin/ingredients" 
-                       class="block p-6 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">🥝</div>
-                            <h4 class="text-lg font-medium text-purple-900">Ingredientes</h4>
-                            <p class="text-sm text-purple-700">Opções para personalização</p>
-                        </div>
-                    </a>
-
-                    <a href="/admin/pedidos" 
-                       class="block p-6 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">📋</div>
-                            <h4 class="text-lg font-medium text-orange-900">Pedidos</h4>
-                            <p class="text-sm text-orange-700">Gerenciar pedidos da loja</p>
-                        </div>
-                    </a>
-
-                    <a href="/admin/clientes" 
-                       class="block p-6 bg-pink-50 rounded-lg hover:bg-pink-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">👥</div>
-                            <h4 class="text-lg font-medium text-pink-900">Clientes</h4>
-                            <p class="text-sm text-pink-700">Visualizar clientes cadastrados</p>
-                        </div>
-                    </a>
-                </div>
-                
-                <!-- Segunda linha de menu -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                    <a href="/admin/pedidos/novo" 
-                       class="block p-6 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">➕</div>
-                            <h4 class="text-lg font-medium text-emerald-900">CRIAR PEDIDO</h4>
-                            <p class="text-sm text-emerald-700">Cadastrar pedido manual</p>
-                        </div>
-                    </a>
-                    
-                    <a href="/admin/relatorios" 
-                       class="block p-6 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
-                        <div class="text-center">
-                            <div class="text-3xl mb-2">$</div>
-                            <h4 class="text-lg font-medium text-indigo-900">Ganhos</h4>
-                            <p class="text-sm text-indigo-700">Análise das vendas</p>
-                        </div>
-                    </a>
-                </div>
-            </div>
+        <div>
+            <div class="text-2xl font-bold text-slate-800">{{ $totalCategories }}</div>
+            <div class="text-xs text-slate-500 mt-0.5 font-medium">Categorias</div>
         </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">
+            <i class="fas fa-leaf text-white text-xl"></i>
+        </div>
+        <div>
+            <div class="text-2xl font-bold text-slate-800">{{ $totalIngredients }}</div>
+            <div class="text-xs text-slate-500 mt-0.5 font-medium">Ingredientes</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+            <i class="fas fa-receipt text-white text-xl"></i>
+        </div>
+        <div>
+            <div class="text-2xl font-bold text-slate-800">{{ $totalOrders }}</div>
+            <div class="text-xs text-slate-500 mt-0.5 font-medium">Pedidos</div>
+        </div>
+    </div>
+</div>
 
-                <!-- Pedidos Recentes -->
-        <div class="bg-white shadow rounded-lg mb-8 mt-5">
-            <div class="px-4 py-5 sm:p-6">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                    <i class="fas fa-receipt mr-2 text-blue-600"></i> Últimos Pedidos
-                </h3>
-                <a href="/admin/pedidos/novo" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm flex items-center gap-2">
-                    <i class="fas fa-plus"></i> Adicionar Pedido
-                </a>
+<!-- ── TABS ── -->
+<div class="bg-slate-200/60 rounded-2xl p-1.5 inline-flex gap-1 mb-5">
+    <button onclick="switchTab('kanban')" class="tab-btn active" id="tab-kanban">
+        <i class="fas fa-th-large"></i> Kanban
+    </button>
+    <button onclick="switchTab('recent')" class="tab-btn" id="tab-recent">
+        <i class="fas fa-list"></i> Recentes
+    </button>
+</div>
+
+<!-- ══════════ KANBAN ══════════ -->
+<div id="view-kanban">
+
+    <!-- Filters -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+        <button onclick="kFilter('all')" class="kfbtn active text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 bg-white shadow-sm text-indigo-600" data-f="all">
+            <i class="fas fa-th mr-1"></i> Todos
+        </button>
+        <button onclick="kFilter('today')" class="kfbtn text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-indigo-600 transition" data-f="today">
+            <i class="fas fa-calendar-day mr-1"></i> Hoje
+        </button>
+        <button onclick="kFilter('high')" class="kfbtn text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-indigo-600 transition" data-f="high">
+            <i class="fas fa-star mr-1"></i> Alto valor
+        </button>
+        <div class="relative flex-1 min-w-[160px] max-w-xs">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="k-search" type="text" placeholder="Buscar cliente..."
+                   class="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 shadow-sm">
+        </div>
+        <button onclick="loadKanban()" class="text-xs font-semibold px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 transition shadow-sm">
+            <i class="fas fa-sync-alt mr-1"></i> Atualizar
+        </button>
+    </div>
+
+    <!-- Board -->
+    <div class="kanban-grid">
+        <div class="kanban-cols grid grid-cols-5 gap-3">
+
+            <div class="kanban-col">
+                <div class="kanban-col-hdr" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-hourglass-start text-amber-500 text-sm"></i>
+                        <span class="text-sm font-bold text-amber-900">Pendente</span>
+                    </div>
+                    <span class="bg-amber-200 text-amber-800 text-xs font-bold px-2 py-0.5 rounded-full pending-count">0</span>
+                </div>
+                <div class="kanban-zone" data-status="pending"></div>
             </div>
+
+            <div class="kanban-col">
+                <div class="kanban-col-hdr" style="background:linear-gradient(135deg,#ede9fe,#c4b5fd)">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-violet-500 text-sm"></i>
+                        <span class="text-sm font-bold text-violet-900">Confirmado</span>
+                    </div>
+                    <span class="bg-violet-200 text-violet-800 text-xs font-bold px-2 py-0.5 rounded-full confirmed-count">0</span>
+                </div>
+                <div class="kanban-zone" data-status="confirmed"></div>
+            </div>
+
+            <div class="kanban-col">
+                <div class="kanban-col-hdr" style="background:linear-gradient(135deg,#dbeafe,#93c5fd)">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-fire text-blue-500 text-sm"></i>
+                        <span class="text-sm font-bold text-blue-900">Preparando</span>
+                    </div>
+                    <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-0.5 rounded-full preparing-count">0</span>
+                </div>
+                <div class="kanban-zone" data-status="preparing"></div>
+            </div>
+
+            <div class="kanban-col">
+                <div class="kanban-col-hdr" style="background:linear-gradient(135deg,#dcfce7,#86efac)">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-double text-emerald-500 text-sm"></i>
+                        <span class="text-sm font-bold text-emerald-900">Pronto</span>
+                    </div>
+                    <span class="bg-emerald-200 text-emerald-800 text-xs font-bold px-2 py-0.5 rounded-full ready-count">0</span>
+                </div>
+                <div class="kanban-zone" data-status="ready"></div>
+            </div>
+
+            <div class="kanban-col">
+                <div class="kanban-col-hdr" style="background:linear-gradient(135deg,#f1f5f9,#e2e8f0)">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-box text-slate-500 text-sm"></i>
+                        <span class="text-sm font-bold text-slate-700">Entregue</span>
+                    </div>
+                    <span class="bg-slate-200 text-slate-700 text-xs font-bold px-2 py-0.5 rounded-full delivered-count">0</span>
+                </div>
+                <div class="kanban-zone" data-status="delivered"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ══════════ RECENTES ══════════ -->
+<div id="view-recent" class="hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-receipt text-indigo-500"></i> Últimos Pedidos
+            </h3>
+            <a href="/admin/pedidos" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1">
+                Ver todos <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+        <div class="divide-y divide-slate-50 px-6">
             @if (empty($recentOrders))
-                <div class="text-gray-500 text-center py-8">Nenhum pedido recente.</div>
+                <div class="py-12 text-center">
+                    <div class="text-5xl mb-3">📋</div>
+                    <p class="text-slate-500 text-sm">Nenhum pedido recente.</p>
+                </div>
             @else
-                <div class="space-y-6">
                 @foreach ($recentOrders as $order)
-                    <div class="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between bg-gray-50">
-                    <div class="flex-1">
-                        <div class="flex flex-col md:flex-row md:items-center md:space-x-4">
-                        <div class="font-semibold text-gray-900 text-base">
-                            {{ $order['customer_name'] }}
-                            <span class="text-xs text-gray-500 ml-2">({{ $order['customer_phone'] }})</span>
-                        </div>
-                        <div class="text-xs text-gray-500 mt-1 md:mt-0">{{ $order['customer_address'] }}</div>
-                        </div>
-                        <div class="flex flex-wrap items-center mt-2 space-x-2">
-                        <span class="text-xs text-gray-600">{{ date('d/m/Y H:i', strtotime($order['created_at'])) }}</span>
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ ucfirst($order['status']) }}</span>
-                        <span class="text-sm font-bold text-gray-900 ml-2">R$ {{ number_format($order['total_amount'], 2, ',', '.') }}</span>
-                        </div>
-                        @if (!empty($order['items']))
-                        <ul class="mt-2 ml-2 text-sm text-gray-800 space-y-1">
-                            @foreach ($order['items'] as $item)
-                            <li>
-                                <span class="font-medium">{{ $item['product_name'] }}</span>
-                                <span class="text-xs text-gray-500">x{{ $item['quantity'] }}</span>
-                                @if (!empty($item['ingredients']))
-                                <span class="text-xs text-gray-500">- {{ implode(', ', $item['ingredients']) }}</span>
-                                @endif
-                            </li>
-                            @endforeach
-                        </ul>
-                        @endif
-                        @if (!empty($order['notes']))
-                        <div class="mt-1 text-xs text-yellow-700 bg-yellow-50 rounded p-2">Obs: {{ $order['notes'] }}</div>
-                        @endif
+                @php
+                    $sc = [
+                        'pending'   => ['bg-amber-100','text-amber-700','fas fa-hourglass-start'],
+                        'confirmed' => ['bg-violet-100','text-violet-700','fas fa-check-circle'],
+                        'preparing' => ['bg-blue-100','text-blue-700','fas fa-fire'],
+                        'ready'     => ['bg-emerald-100','text-emerald-700','fas fa-check-double'],
+                        'delivered' => ['bg-slate-100','text-slate-600','fas fa-box'],
+                        'cancelled' => ['bg-red-100','text-red-600','fas fa-times-circle'],
+                    ][$order['status']] ?? ['bg-gray-100','text-gray-600','fas fa-circle'];
+                @endphp
+                <div class="order-row">
+                    <div class="w-8 h-8 {{ $sc[0] }} {{ $sc[1] }} rounded-lg flex items-center justify-center flex-shrink-0 text-xs">
+                        <i class="{{ $sc[2] }}"></i>
                     </div>
-                    <!-- Botões de Impressão e Visualização -->
-                    <div class="mt-3 md:mt-0 md:ml-4 flex-shrink-0 flex items-center gap-2">
-                        <!-- Botão QZ Tray -->
-                        <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded flex items-center gap-1 print-btn text-sm" data-order-id="{{ $order['id'] }}">
-                        <i class="fas fa-print"></i> QZ Tray
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-slate-800 text-sm">#{{ $order['id'] }}</span>
+                            <span class="font-medium text-slate-700 text-sm truncate">{{ $order['customer_name'] }}</span>
+                            <span class="text-xs text-slate-400">({{ $order['customer_phone'] }})</span>
+                        </div>
+                        <div class="text-xs text-slate-400 mt-0.5">{{ date('d/m/Y H:i', strtotime($order['created_at'])) }}</div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <div class="font-bold text-slate-800 text-sm">R$ {{ number_format($order['total_amount'], 2, ',', '.') }}</div>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <button class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-2.5 py-1.5 rounded-lg text-xs font-medium transition print-pdf-btn" data-order-id="{{ $order['id'] }}">
+                            <i class="fas fa-print"></i>
                         </button>
-                        <!-- Botão PDF -->
-                        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded flex items-center gap-1 print-pdf-btn text-sm" data-order-id="{{ $order['id'] }}">
-                        <i class="fas fa-file-pdf"></i> PDF
-                        </button>
-                        <!-- Botão Ver Pedido -->
-                        <a href="/admin/pedidos/{{ $order['id'] }}" target="_blank" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded flex items-center gap-1 text-sm">
-                        <i class="fas fa-eye"></i> Ver
+                        <a href="/admin/pedidos/{{ $order['id'] }}" target="_blank" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-medium transition">
+                            <i class="fas fa-eye"></i>
                         </a>
                     </div>
-                    </div>
-                @endforeach
                 </div>
-                @endif
-            </div>
+                @endforeach
+            @endif
         </div>
-    </main>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="assets/js/admin-print-poll.js"></script>
-    <script>
-        // Configuração de assinatura digital para QZ Tray
-        qz.security.setSignaturePromise(function(toSign) {
-            return function(resolve, reject) {
-                resolve(); // Sem assinatura (modo unsigned)
-            };
-        });
+    </div>
+</div>
+@endsection
 
-        qz.security.setCertificatePromise(function(resolve, reject) {
-            resolve(null); // Sem certificado (modo unsigned)
-        });
+@section('scripts')
+<script>
+// ── TABS ──
+function switchTab(tab) {
+    ['kanban','recent'].forEach(t => {
+        document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    });
+}
 
-        // Conectar ao QZ Tray na inicialização
-        window.addEventListener('DOMContentLoaded', () => {
-            if (window.qz) {
-                qz.websocket.connect().then(() => {
-                    console.log('QZ Tray conectado com sucesso');
-                }).catch(err => {
-                    console.error('Erro ao conectar com QZ Tray:', err);
+// ── KANBAN ──
+const sbars = { pending:'#f59e0b', confirmed:'#8b5cf6', preparing:'#3b82f6', ready:'#10b981', delivered:'#94a3b8' };
+let allOrders = [], curFilter = 'all', kSearch = '';
+
+async function loadKanban() {
+    try {
+        const r = await fetch('/admin/api/orders');
+        const d = await r.json();
+        allOrders = d.orders || [];
+        doRender(allOrders);
+    } catch(e) { console.error(e); }
+}
+
+function doRender(orders) {
+    const groups = { pending:[], confirmed:[], preparing:[], ready:[], delivered:[] };
+    orders.forEach(o => { if (groups[o.status]) groups[o.status].push(o); });
+    Object.entries(groups).forEach(([s, list]) => {
+        const zone = document.querySelector(`[data-status="${s}"]`);
+        if (!zone) return;
+        zone.innerHTML = '';
+        if (!list.length) {
+            zone.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:11px;padding:24px 0;font-style:italic;">Vazio</div>';
+        } else {
+            list.forEach(o => zone.appendChild(mkCard(o)));
+        }
+        const badge = document.querySelector(`.${s}-count`);
+        if (badge) badge.textContent = list.length;
+    });
+}
+
+function mkCard(o) {
+    const el = document.createElement('div');
+    el.className = 'k-card';
+    el.dataset.orderId = o.id;
+    const time = new Date(o.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const date = new Date(o.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    const total = parseFloat(o.total_amount).toFixed(2).replace('.',',');
+    const bar = sbars[o.status] || '#94a3b8';
+    el.innerHTML = `
+        <div class="sbar" style="background:${bar}"></div>
+        <div style="padding-left:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+                <span style="font-size:11px;font-weight:700;color:#64748b;">#${o.id}</span>
+                <span style="font-size:11px;color:#94a3b8;">${date} ${time}</span>
+            </div>
+            <div style="font-weight:600;color:#1e293b;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(o.customer_name)}</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">${esc(o.customer_phone||'')}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-size:11px;color:#94a3b8;">${o.items_count||0} item(s)</span>
+                <span style="font-size:13px;font-weight:700;color:#1e293b;">R$ ${total}</span>
+            </div>
+            ${o.notes ? `<div style="font-size:11px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;margin-bottom:6px;">${esc(o.notes)}</div>` : ''}
+            <a href="/admin/pedidos/${o.id}" target="_blank" style="display:block;text-align:center;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569;border-radius:7px;padding:5px;text-decoration:none;">
+                <i class="fas fa-eye" style="margin-right:4px;"></i>Ver pedido
+            </a>
+        </div>`;
+    return el;
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setupDnD() {
+    document.querySelectorAll('.kanban-zone').forEach(zone => {
+        Sortable.create(zone, {
+            group: 'kb',
+            animation: 200,
+            ghostClass: 'ghost-card',
+            onEnd: async evt => {
+                const id = evt.item.dataset.orderId;
+                const newStatus = evt.to.dataset.status;
+                await fetch(`/admin/pedidos/${id}/status`, {
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({status: newStatus})
+                });
+                const o = allOrders.find(x => x.id == id);
+                if (o) o.status = newStatus;
+                // update counts only
+                const counts = {pending:0,confirmed:0,preparing:0,ready:0,delivered:0};
+                allOrders.forEach(x => { if(counts[x.status]!==undefined) counts[x.status]++; });
+                Object.entries(counts).forEach(([s,c]) => {
+                    const b = document.querySelector(`.${s}-count`);
+                    if(b) b.textContent = c;
                 });
             }
         });
+    });
+}
 
-        // Função para imprimir pedidos via QZ Tray
-        document.querySelectorAll('.print-btn').forEach(button => {
-            button.addEventListener('click', async () => {
-                const orderId = button.getAttribute('data-order-id');
-                
-                if (!window.qz) {
-                    alert('QZ Tray não está disponível. Use a opção PDF.');
-                    return;
-                }
+function kFilter(f) {
+    curFilter = f;
+    document.querySelectorAll('.kfbtn').forEach(b => b.classList.remove('active','text-indigo-600'));
+    document.querySelector(`[data-f="${f}"]`)?.classList.add('active','text-indigo-600');
+    applyFilters();
+}
 
-                try {
-                    console.log('Iniciando impressão QZ Tray do pedido:', orderId);
-                    
-                    // Listar impressoras disponíveis
-                    const printers = await qz.printers.find();
-                    console.log('Impressoras disponíveis:', printers);
-                    
-                    if (!printers || printers.length === 0) {
-                        alert('Nenhuma impressora encontrada. Verifique se há impressoras instaladas.');
-                        return;
-                    }
-                    
-                    // Usar a primeira impressora (geralmente a padrão)
-                    const printerName = printers[0];
-                    console.log('Usando impressora:', printerName);
-                    
-                    // Buscar dados de impressão com comandos ESC/POS
-                    const resp = await fetch('/admin/print-order/' + orderId);
-                    if (!resp.ok) throw new Error('Erro ao buscar dados de impressão');
-                    const result = await resp.json();
-                    
-                    console.log('Dados recebidos:', result);
-                    
-                    // Configurar impressora específica
-                    const config = qz.configs.create(printerName, {
-                        colorType: 'blackwhite',
-                        encoding: 'UTF-8'
-                    });
-                    
-                    console.log('Configuração criada:', config);
-                    
-                    // Preparar dados para impressão - usar string com comandos ESC/POS
-                    const data = [{
-                        type: 'raw',
-                        format: 'plain',
-                        data: result.printData
-                    }];
-                    
-                    console.log('Enviando para impressão:', data);
-                    
-                    // Imprimir
-                    await qz.print(config, data);
-                    
-                    console.log('Impressão enviada com sucesso para:', printerName);
-                    alert('Pedido enviado para impressão via QZ Tray!');
-                    
-                } catch (e) {
-                    console.error('Erro de impressão QZ Tray:', e);
-                    alert('Erro ao imprimir via QZ Tray: ' + (e.message || e) + '\nTente usar a opção PDF.');
-                }
-            });
-        });
+function applyFilters() {
+    let list = [...allOrders];
+    if (curFilter === 'today') {
+        const t = new Date(); t.setHours(0,0,0,0);
+        list = list.filter(o => { const d = new Date(o.created_at); d.setHours(0,0,0,0); return d.getTime()===t.getTime(); });
+    } else if (curFilter === 'high') {
+        list = list.filter(o => parseFloat(o.total_amount) >= 100);
+    }
+    const q = kSearch.trim().toLowerCase();
+    if (q) list = list.filter(o => (o.customer_name||'').toLowerCase().includes(q) || (o.customer_phone||'').includes(q));
+    doRender(list);
+}
 
-        // Função para imprimir pedidos via PDF
-        document.querySelectorAll('.print-pdf-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                const orderId = button.getAttribute('data-order-id');
-                console.log('Abrindo PDF de impressão para pedido:', orderId);
-                
-                // Abrir PDF em nova aba - formatado para impressora térmica
-                const pdfUrl = '/admin/print-order-pdf/' + orderId;
-                window.open(pdfUrl, '_blank');
-            });
-        });
-    </script>
-</body>
-</html>
+document.getElementById('k-search')?.addEventListener('input', e => { kSearch = e.target.value; applyFilters(); });
+
+// PDF print buttons (manual)
+document.querySelectorAll('.print-pdf-btn').forEach(btn => {
+    btn.addEventListener('click', () => window.open('/admin/print-order-pdf/' + btn.dataset.orderId, '_blank'));
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadKanban();
+    setupDnD();
+    setInterval(() => { if (!document.getElementById('view-kanban').classList.contains('hidden')) loadKanban(); }, 30000);
+});
+</script>
+@endsection

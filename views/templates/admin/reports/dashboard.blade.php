@@ -1,333 +1,139 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $pageTitle }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-100">
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center py-6">
-                <div class="flex items-center space-x-4">
-                    <a href="/admin" class="text-gray-500 hover:text-gray-700">← Voltar ao Dashboard</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <input type="date" id="dateFilter" value="{{ $selectedDate }}" 
-                           class="border border-gray-300 rounded-md px-3 py-2 text-sm"
-                           onchange="updateReports()">
-                    <a href="/admin/relatorios/diario" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-calendar-day mr-1"></i> Resumo Dia
-                    </a>
-                </div>
+@extends('layouts.admin')
+
+@section('title', 'Relatórios Financeiros')
+
+@section('head')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endsection
+
+@section('topbar-actions')
+<input type="date" id="dateFilter" value="{{ $selectedDate }}"
+       class="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+       onchange="updateReports()">
+<a href="/admin/relatorios/diario"
+   class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+    <i class="fas fa-calendar-day text-xs"></i> Resumo do Dia
+</a>
+@endsection
+
+@section('content')
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    @php
+    $summaryCards = [
+        ['Receita Hoje',    'fas fa-dollar-sign', '#10b981', '#059669', 'R$ ' . number_format($dailyReport['gross_revenue'],2,',','.'),$comparison['revenue_change']],
+        ['Pedidos Hoje',    'fas fa-receipt',     '#6366f1', '#4f46e5', $dailyReport['total_orders'], $comparison['orders_change']],
+        ['Ticket Médio',    'fas fa-chart-line',  '#f59e0b', '#d97706', 'R$ ' . number_format($dailyReport['avg_order_value'],2,',','.'), $comparison['avg_order_change']],
+        ['Lucro Estimado',  'fas fa-coins',       '#8b5cf6', '#7c3aed', 'R$ ' . number_format($dailyReport['estimated_profit'],2,',','.'), null],
+    ];
+    @endphp
+    @foreach ($summaryCards as $card)
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                 style="background:linear-gradient(135deg,{{ $card[2] }},{{ $card[3] }})">
+                <i class="{{ $card[1] }} text-white text-sm"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-500 font-medium mb-0.5">{{ $card[0] }}</div>
+                <div class="text-xl font-bold text-slate-800">{{ $card[4] }}</div>
+                @if ($card[5] !== null)
+                    @if ($card[5] > 0)
+                        <div class="text-xs text-emerald-600 font-semibold mt-0.5"><i class="fas fa-arrow-up"></i> +{{ $card[5] }}% vs anterior</div>
+                    @elseif ($card[5] < 0)
+                        <div class="text-xs text-red-500 font-semibold mt-0.5"><i class="fas fa-arrow-down"></i> {{ $card[5] }}% vs anterior</div>
+                    @else
+                        <div class="text-xs text-slate-400 mt-0.5">0% vs anterior</div>
+                    @endif
+                @else
+                    <div class="text-xs text-slate-400 mt-0.5">70% da receita bruta</div>
+                @endif
             </div>
         </div>
-    </header>
+    </div>
+    @endforeach
+</div>
 
-    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <!-- Cards de Resumo -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Receita do Dia -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-dollar-sign text-white text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Receita Hoje</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    R$ {{ number_format($dailyReport['gross_revenue'], 2, ',', '.') }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-5 py-3">
-                    <div class="text-sm">
-                        @if ($comparison['revenue_change'] > 0)
-                            <span class="text-green-600 font-medium">
-                                <i class="fas fa-arrow-up"></i> +{{ $comparison['revenue_change'] }}%
-                            </span>
-                        @elseif ($comparison['revenue_change'] < 0)
-                            <span class="text-red-600 font-medium">
-                                <i class="fas fa-arrow-down"></i> {{ $comparison['revenue_change'] }}%
-                            </span>
-                        @else
-                            <span class="text-gray-600 font-medium">
-                                <i class="fas fa-minus"></i> 0%
-                            </span>
+<!-- Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h3 class="text-sm font-bold text-slate-800 mb-4">Vendas da Semana</h3>
+        <canvas id="weeklyChart" height="200"></canvas>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h3 class="text-sm font-bold text-slate-800 mb-4">Vendas por Hora (Últimos 7 dias)</h3>
+        <canvas id="hourlyChart" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Top Products -->
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-100">
+        <h3 class="text-sm font-bold text-slate-800">Top 5 Produtos (Últimos 7 dias)</h3>
+    </div>
+    @if (!empty($topProducts))
+    <table class="min-w-full">
+        <thead class="bg-slate-50 border-b border-slate-100">
+            <tr>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Produto</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Quantidade</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Receita</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Pedidos</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+            @foreach ($topProducts as $product)
+            <tr class="hover:bg-slate-50 transition">
+                <td class="px-5 py-4">
+                    <div class="flex items-center gap-3">
+                        @if (!empty($product['product_image']))
+                            <img class="w-9 h-9 rounded-xl object-cover" src="{{ $product['product_image'] }}" alt="">
                         @endif
-                        <span class="text-gray-600"> vs período anterior</span>
+                        <span class="text-sm font-semibold text-slate-800">{{ $product['product_name'] }}</span>
                     </div>
-                </div>
-            </div>
+                </td>
+                <td class="px-5 py-4 text-sm text-slate-700">{{ $product['total_quantity'] }}</td>
+                <td class="px-5 py-4 text-sm font-semibold text-slate-800">R$ {{ number_format($product['total_revenue'], 2, ',', '.') }}</td>
+                <td class="px-5 py-4 text-sm text-slate-700">{{ $product['orders_count'] }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @else
+    <div class="py-12 text-center text-slate-400 text-sm">Nenhum produto vendido no período.</div>
+    @endif
+</div>
+@endsection
 
-            <!-- Pedidos do Dia -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-shopping-cart text-white text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Pedidos Hoje</dt>
-                                <dd class="text-lg font-medium text-gray-900">{{ $dailyReport['total_orders'] }}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-5 py-3">
-                    <div class="text-sm">
-                        @if ($comparison['orders_change'] > 0)
-                            <span class="text-green-600 font-medium">
-                                <i class="fas fa-arrow-up"></i> +{{ $comparison['orders_change'] }}%
-                            </span>
-                        @elseif ($comparison['orders_change'] < 0)
-                            <span class="text-red-600 font-medium">
-                                <i class="fas fa-arrow-down"></i> {{ $comparison['orders_change'] }}%
-                            </span>
-                        @else
-                            <span class="text-gray-600 font-medium">
-                                <i class="fas fa-minus"></i> 0%
-                            </span>
-                        @endif
-                        <span class="text-gray-600"> vs período anterior</span>
-                    </div>
-                </div>
-            </div>
+@section('scripts')
+<script>
+const weeklyData = @json($weeklyReport);
+const weeklyLabels = weeklyData.map(d => new Date(d.date).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'}));
+const weeklyRevenue = weeklyData.map(d => parseFloat(d.gross_revenue));
 
-            <!-- Ticket Médio -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-chart-line text-white text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Ticket Médio</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    R$ {{ number_format($dailyReport['avg_order_value'], 2, ',', '.') }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-5 py-3">
-                    <div class="text-sm">
-                        @if ($comparison['avg_order_change'] > 0)
-                            <span class="text-green-600 font-medium">
-                                <i class="fas fa-arrow-up"></i> +{{ $comparison['avg_order_change'] }}%
-                            </span>
-                        @elseif ($comparison['avg_order_change'] < 0)
-                            <span class="text-red-600 font-medium">
-                                <i class="fas fa-arrow-down"></i> {{ $comparison['avg_order_change'] }}%
-                            </span>
-                        @else
-                            <span class="text-gray-600 font-medium">
-                                <i class="fas fa-minus"></i> 0%
-                            </span>
-                        @endif
-                        <span class="text-gray-600"> vs período anterior</span>
-                    </div>
-                </div>
-            </div>
+new Chart(document.getElementById('weeklyChart').getContext('2d'), {
+    type: 'line',
+    data: { labels: weeklyLabels, datasets: [{ label: 'Receita (R$)', data: weeklyRevenue,
+        borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.1)', tension: .3, fill: true }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toFixed(2) } } } }
+});
 
-            <!-- Lucro Estimado -->
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
-                                <i class="fas fa-coins text-white text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Lucro Estimado</dt>
-                                <dd class="text-lg font-medium text-gray-900">
-                                    R$ {{ number_format($dailyReport['estimated_profit'], 2, ',', '.') }}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-5 py-3">
-                    <div class="text-sm">
-                        <span class="text-gray-600">70% da receita bruta</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+const hourlyData = @json($hourlyData);
+const hLabels = Array.from({length:24},(_,i)=>i+'h');
+const hRevenue = hLabels.map((_,i) => { const d = hourlyData.find(x => parseInt(x.hour)===i); return d ? parseFloat(d.total_revenue) : 0; });
 
-        <!-- Gráficos -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <!-- Vendas da Semana -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Vendas da Semana</h3>
-                <canvas id="weeklyChart" width="400" height="200"></canvas>
-            </div>
+new Chart(document.getElementById('hourlyChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: hLabels, datasets: [{ label: 'Receita (R$)', data: hRevenue,
+        backgroundColor: 'rgba(16,185,129,.8)', borderColor: '#10b981', borderWidth: 1 }] },
+    options: { responsive: true, plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$'+v } } } }
+});
 
-            <!-- Vendas por Hora -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Vendas por Hora (Últimos 7 dias)</h3>
-                <canvas id="hourlyChart" width="400" height="200"></canvas>
-            </div>
-        </div>
-
-        <!-- Top Produtos -->
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Top 5 Produtos (Últimos 7 dias)</h3>
-            @if (!empty($topProducts))
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Produto
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Quantidade
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Receita
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Pedidos
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach ($topProducts as $product)
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            @if (!empty($product['product_image']))
-                                                <img class="h-10 w-10 rounded-full object-cover mr-3" 
-                                                     src="{{ $product['product_image'] }}" 
-                                                     alt="{{ $product['product_name'] }}">
-                                            @endif
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $product['product_name'] }}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ $product['total_quantity'] }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        R$ {{ number_format($product['total_revenue'], 2, ',', '.') }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {{ $product['orders_count'] }}
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @else
-                <p class="text-gray-500 text-center py-8">Nenhum produto vendido no período.</p>
-            @endif
-        </div>
-    </main>
-
-    <script>
-        // Dados da semana
-        const weeklyData = @json($weeklyReport);
-        const weeklyLabels = weeklyData.map(item => {
-            const date = new Date(item.date);
-            return date.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit' });
-        });
-        const weeklyRevenue = weeklyData.map(item => parseFloat(item.gross_revenue));
-
-        // Gráfico da semana
-        const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
-        new Chart(weeklyCtx, {
-            type: 'line',
-            data: {
-                labels: weeklyLabels,
-                datasets: [{
-                    label: 'Receita (R$)',
-                    data: weeklyRevenue,
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'R$ ' + value.toFixed(2);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // Dados por hora
-        const hourlyData = @json($hourlyData);
-        const hourlyLabels = [];
-        const hourlyRevenue = [];
-        
-        // Preencher todas as horas (0-23)
-        for (let i = 0; i < 24; i++) {
-            hourlyLabels.push(i + 'h');
-            const hourData = hourlyData.find(item => parseInt(item.hour) === i);
-            hourlyRevenue.push(hourData ? parseFloat(hourData.total_revenue) : 0);
-        }
-
-        // Gráfico por hora
-        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-        new Chart(hourlyCtx, {
-            type: 'bar',
-            data: {
-                labels: hourlyLabels,
-                datasets: [{
-                    label: 'Receita (R$)',
-                    data: hourlyRevenue,
-                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                    borderColor: 'rgb(34, 197, 94)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'R$ ' + value.toFixed(2);
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        function updateReports() {
-            const selectedDate = document.getElementById('dateFilter').value;
-            window.location.href = `/admin/relatorios?date=${selectedDate}`;
-        }
-    </script>
-</body>
-</html>
+function updateReports() {
+    window.location.href = '/admin/relatorios?date=' + document.getElementById('dateFilter').value;
+}
+</script>
+@endsection
