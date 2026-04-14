@@ -39,9 +39,11 @@ namespace App\Controllers;
 		$perPage = 20;
 		$search = $queryParams['search'] ?? '';
 		$status = $queryParams['status'] ?? null;
-		$userId = $queryParams['user_id'] ?? null;
-			$orders = $this->orderModel->getAllOrdersPaginated($page, $perPage, $search, $status, $userId);
-			$totalOrders = $this->orderModel->getTotalOrdersCount($search, $status, $userId);
+		$userModel = new \App\Models\User($this->orderModel->getConnection());
+		$user = $userModel->getById($_SESSION['user_id'] ?? 0);
+		$storeId = $user['store_id'] ?? null;
+			$orders = $this->orderModel->getAllOrdersPaginated($page, $perPage, $search, $status, $storeId);
+			$totalOrders = $this->orderModel->getTotalOrdersCount($search, $status, $storeId);
 			$totalPages = ceil($totalOrders / $perPage);
 			
 			$data = [

@@ -91,7 +91,7 @@
                 ][$order['status']] ?? ucfirst($order['status']);
             @endphp
             <tr class="hover:bg-slate-50 transition">
-                <td class="px-5 py-4 text-sm font-bold text-slate-700">#{{ $order['id'] }}</td>
+                <td class="px-5 py-4 text-sm font-bold text-slate-700">#{{ $order['daily_order_number'] ?? $order['id'] }}</td>
                 <td class="px-5 py-4">
                     <div class="text-sm font-semibold text-slate-800">{{ $order['customer_name'] }}</div>
                     <div class="text-xs text-slate-400">{{ $order['customer_phone'] }}</div>
@@ -151,7 +151,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
         <div class="flex justify-between items-start mb-3">
             <div>
-                <span class="font-bold text-slate-800">#{{ $order['id'] }}</span>
+                <span class="font-bold text-slate-800">#{{ $order['daily_order_number'] ?? $order['id'] }}</span>
                 <span class="text-xs text-slate-400 ml-2">{{ date('d/m/Y H:i', strtotime($order['created_at'])) }}</span>
             </div>
             <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $sc }}">{{ $sl }}</span>
