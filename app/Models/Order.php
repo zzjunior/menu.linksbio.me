@@ -22,8 +22,23 @@ class Order extends BaseModel
         $result = $stmt->executeQuery([$phone]);
         return $result->fetchAllAssociative();
     }
+    private function generateDailyOrderNumber($storeId)
+    {
+        $today = date('Y-m-d 00:00:00');
+        $sql = "SELECT MAX(daily_order_number) as max_number FROM orders WHERE store_id = ? AND created_at >= ?";
+        $stmt = $this->db->prepare($sql);
+        $result = $stmt->executeQuery([$storeId, $today]);
+        $row = $result->fetchAssociative();
+        
+        $maxNumber = $row['max_number'] ? (int) $row['max_number'] : 0;
+        return $maxNumber + 1;
+    }
+
     public function create($data)
     {
+        if (isset($data['store_id'])) {
+            $data['daily_order_number'] = $this->generateDailyOrderNumber($data['store_id']);
+        }
         return $this->insert('orders', $data);
     }
 
@@ -38,6 +53,10 @@ class Order extends BaseModel
         
         // Adicionar customer_id aos dados do pedido
         $orderData['customer_id'] = $customerId;
+        
+        if (isset($orderData['store_id'])) {
+            $orderData['daily_order_number'] = $this->generateDailyOrderNumber($orderData['store_id']);
+        }
         
         // Criar o pedido
         $orderId = $this->insert('orders', $orderData);
@@ -269,7 +288,7 @@ class Order extends BaseModel
     /**
      * Lista pedidos com paginação e filtros
      */
-    public function getAllOrdersPaginated($page = 1, $perPage = 20, $search = '', $status = '', $userId = null)
+    public function getAllOrdersPaginated($page = 1, $perPage = 20, $search = '', $status = '', $storeId = null)
     {
         $offset = ($page - 1) * $perPage;
         
@@ -283,10 +302,10 @@ class Order extends BaseModel
         
         $params = [];
         
-        // Filtro por loja/usuário
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        // Filtro por loja
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         // Filtro de busca
@@ -313,15 +332,15 @@ class Order extends BaseModel
     /**
      * Conta total de pedidos com filtros
      */
-    public function getTotalOrdersCount($search = '', $status = '', $userId = null)
+    public function getTotalOrdersCount($search = '', $status = '', $storeId = null)
     {
         $sql = "SELECT COUNT(DISTINCT o.id) as total FROM orders o WHERE 1=1";
         $params = [];
         
-        // Filtro por loja/usuário
-        if ($userId) {
-            $sql .= " AND o.user_id = ?";
-            $params[] = $userId;
+        // Filtro por loja
+        if ($storeId) {
+            $sql .= " AND o.store_id = ?";
+            $params[] = $storeId;
         }
         
         // Filtro de busca
